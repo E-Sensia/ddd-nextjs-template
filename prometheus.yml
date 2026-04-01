@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# OTLP receiver is enabled via --web.enable-otlp-receiver CLI flag.
+# The app pushes metrics to POST /api/v1/otlp/v1/metrics.
+# No scrape targets needed — all metrics arrive via OTLP push.

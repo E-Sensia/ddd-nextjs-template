@@ -1,7 +1,11 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  serverExternalPackages: [
+    "@opentelemetry/sdk-node",
+    "@opentelemetry/exporter-metrics-otlp-proto",
+    "@opentelemetry/sdk-metrics",
+  ],
+}
 
-export default nextConfig;
+export default nextConfig

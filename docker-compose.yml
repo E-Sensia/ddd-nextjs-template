@@ -1,0 +1,75 @@
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+
+  app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.local
+    container_name: app
+    volumes:
+      - ./src:/src/src
+      - ./domain:/src/domain
+      - ./services:/src/services
+      - ./utils:/src/utils
+      - ./config:/src/config
+      - ./public:/src/public
+      - ./main.ts:/src/main.ts
+      - ./instrumentation.ts:/src/instrumentation.ts
+      - ./instrumentation.node.ts:/src/instrumentation.node.ts
+    ports:
+      - "3000:3000"
+    environment:
+      - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://prometheus:9090/api/v1/otlp/v1/metrics
+      - OTEL_EXPORTER_OTLP_METRICS_PROTOCOL=http/protobuf
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=hello-world-nextjs,service.environment=local
+      - OTEL_SERVICE_NAME=hello-world-nextjs
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_TRACES_EXPORTER=none
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_METRIC_EXPORT_INTERVAL=5000
+    depends_on:
+      - prometheus
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`app.localhost`)"
+      - "traefik.http.services.app.loadbalancer.server.port=3000"
+
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    container_name: prometheus
+    command:
+      - "--web.enable-otlp-receiver"
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--log.level=debug"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.localhost`)"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+
+volumes:
+  prometheus-data:
+
+networks:
+  default:
+    name: traefik-network
+    external: false

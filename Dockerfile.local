@@ -1,0 +1,20 @@
+ARG NODE_VERSION=23
+
+FROM node:${NODE_VERSION}-slim
+
+RUN npm install -g pnpm
+
+WORKDIR /src
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install
+
+COPY . .
+
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV OTEL_LOG_LEVEL=info
+ENV PORT=3000
+
+EXPOSE $PORT
+
+CMD ["pnpm", "dev"]
