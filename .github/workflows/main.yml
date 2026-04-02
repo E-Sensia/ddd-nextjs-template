@@ -1,0 +1,19 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+
+jobs:
+  tests:
+    uses: ./.github/workflows/test.yml
+
+  # Add deployment jobs here per environment:
+  #
+  # deploy-aws:
+  #   needs: [tests]
+  #   uses: ./.github/workflows/build-image-deploy-aws.yml
+  #   with:
+  #     stage: ${{ github.ref == 'refs/heads/main' && 'prod' || 'preprod' }}
+  #     dockerfile: Dockerfile
+  #   secrets: inherit

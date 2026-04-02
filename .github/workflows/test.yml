@@ -1,0 +1,32 @@
+name: Test
+
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_call:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 23
+          cache: pnpm
+
+      - run: pnpm i
+
+      - run: pnpm lint
+
+      - run: pnpm tsc
+
+      - run: pnpm test
+
+      - run: pnpm build
