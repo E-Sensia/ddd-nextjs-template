@@ -1,5 +1,3 @@
-import type { Counter } from "@opentelemetry/api"
-
 // --- Objects ---
 
 export type LogLevel = "log" | "info" | "warn" | "error" | "debug"

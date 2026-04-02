@@ -1,15 +1,13 @@
 "use server"
 
 import { getGreetingService } from "../../main"
+import { GreetResponse, greetResponseSchema } from "./greeting.dto"
 
-export async function greetAction(): Promise<{
-  message: string
-  clickCount: number
-}> {
+export async function greetAction(): Promise<GreetResponse> {
   const svc = getGreetingService()
   const result = await svc.greet()
-  return {
+  return greetResponseSchema.parse({
     message: result.message,
     clickCount: result.clickCount,
-  }
+  })
 }
