@@ -1,10 +1,6 @@
-import { Logger } from "../../domain/logging/model"
-import { MetricsRegistry, Tracer } from "../../domain/telemetry/model"
-import {
-  ClickRepository,
-  createGreetingResult,
-  GreetingResult,
-} from "../../domain/greeting/model"
+import { Logger } from "@domain/logging"
+import { MetricsRegistry, Tracer } from "@domain/telemetry"
+import { ClickRepository, createGreetingResult, GreetingResult } from "@domain/greeting"
 
 export type GreetingServiceDeps = {
   logger: Logger

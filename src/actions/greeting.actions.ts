@@ -2,7 +2,7 @@
 
 import { getGreetingService } from "../../main"
 import { GreetResponse, greetResponseSchema } from "./greeting.dto"
-import { ActionResult } from "../../utils/result/result"
+import { ActionResult } from "@utils"
 
 export async function greetAction(): Promise<ActionResult<GreetResponse>> {
   try {

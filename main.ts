@@ -1,14 +1,8 @@
-import { Config } from "./config/config"
-import { createConsoleLogger } from "./domain/logging/console-writer/implementation"
-import {
-  createOtelMetricsRegistry,
-  createOtelTracer,
-} from "./domain/telemetry/otel/implementation"
-import { createInMemoryClickRepository } from "./domain/greeting/memory/implementation"
-import {
-  createGreetingService,
-  GreetingService,
-} from "./services/greeting/service"
+import { Config } from "@config/config"
+import { createConsoleLogger } from "@domain/logging"
+import { createOtelMetricsRegistry, createOtelTracer } from "@domain/telemetry"
+import { createInMemoryClickRepository } from "@domain/greeting"
+import { createGreetingService, GreetingService } from "@services/greeting"
 
 let greetingService: GreetingService
 

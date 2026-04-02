@@ -1,7 +1,7 @@
-import { createGreetingService } from "./service"
-import { createLoggerStub } from "../../domain/logging/stub/implementation"
-import { createMetricsRegistryStub, createTracerStub } from "../../domain/telemetry/stub/implementation"
-import { createClickRepositoryStub } from "../../domain/greeting/stub/implementation"
+import { createGreetingService } from "@services/greeting"
+import { createLoggerStub } from "@domain/logging"
+import { createMetricsRegistryStub, createTracerStub } from "@domain/telemetry"
+import { createClickRepositoryStub } from "@domain/greeting"
 
 describe("GreetingService — expected errors", () => {
   const setup = () => ({

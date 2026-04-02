@@ -1,5 +1,5 @@
-import { Logger } from "../model"
-import { MetricsRegistry, Tracer } from "../../telemetry/model"
+import { Logger } from "@domain/logging"
+import { MetricsRegistry, Tracer } from "@domain/telemetry"
 
 type LoggerDeps = {
   metrics?: MetricsRegistry
