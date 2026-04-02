@@ -29,7 +29,7 @@ services:
       - ./public:/src/public
       - ./main.ts:/src/main.ts
       - ./instrumentation.ts:/src/instrumentation.ts
-      - ./instrumentation.node.ts:/src/instrumentation.node.ts
+      - ./otel:/src/otel
     ports:
       - "3000:3000"
     environment:

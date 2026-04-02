@@ -26,3 +26,9 @@ sdk.start()
 console.log(
   `[OTEL] Metrics SDK started — exporting every ${exportIntervalMillis}ms`,
 )
+
+export async function shutdown(): Promise<void> {
+  console.log("[OTEL] Shutting down metrics SDK...")
+  await sdk.shutdown()
+  console.log("[OTEL] Metrics SDK shut down.")
+}
