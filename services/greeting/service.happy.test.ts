@@ -1,16 +1,6 @@
-import { inject } from "../../utils/injection/inject"
-import {
-  createGreetingService,
-  withLogger,
-  withMetrics,
-  withTracer,
-  withRepository,
-} from "./inject"
+import { createGreetingService } from "./service"
 import { createLoggerStub } from "../../domain/logging/stub/implementation"
-import {
-  createMetricsRegistryStub,
-  createTracerStub,
-} from "../../domain/telemetry/stub/implementation"
+import { createMetricsRegistryStub, createTracerStub } from "../../domain/telemetry/stub/implementation"
 import { createClickRepositoryStub } from "../../domain/greeting/stub/implementation"
 
 describe("GreetingService — happy paths", () => {
@@ -19,13 +9,7 @@ describe("GreetingService — happy paths", () => {
     const metrics = createMetricsRegistryStub()
     const tracer = createTracerStub()
     const repository = createClickRepositoryStub()
-    const svc = inject(
-      createGreetingService,
-      withLogger(logger),
-      withMetrics(metrics),
-      withTracer(tracer),
-      withRepository(repository),
-    )
+    const svc = createGreetingService({ logger, metrics, tracer, repository })
     return { svc, logger, metrics, tracer, repository }
   }
 

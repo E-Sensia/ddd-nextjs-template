@@ -6,26 +6,37 @@ import {
   GreetingResult,
 } from "../../domain/greeting/model"
 
-export class GreetingService {
-  logger!: Logger
-  metrics!: MetricsRegistry
-  tracer!: Tracer
-  repository!: ClickRepository
+export type GreetingServiceDeps = {
+  logger: Logger
+  metrics: MetricsRegistry
+  tracer: Tracer
+  repository: ClickRepository
+}
 
-  async greet(): Promise<GreetingResult> {
-    return this.tracer.span("GreetingService.greet", async () => {
-      const clickCount = await this.repository.increment()
+export type GreetingService = {
+  logger: Logger
+  greet: () => Promise<GreetingResult>
+  getClickCount: () => Promise<number>
+}
 
-      this.logger.info("Button clicked", { clickCount })
-      this.metrics.incrementCounter("greeting.button_clicks", {
-        action: "greet",
-      })
+export function createGreetingService(
+  deps: GreetingServiceDeps,
+): GreetingService {
+  const { logger, metrics, tracer, repository } = deps
 
-      return createGreetingResult(clickCount)
-    })
-  }
+  return {
+    logger,
+    greet: () =>
+      tracer.span("GreetingService.greet", async () => {
+        const clickCount = await repository.increment()
 
-  async getClickCount(): Promise<number> {
-    return this.repository.getCount()
+        logger.info("Button clicked", { clickCount })
+        metrics.incrementCounter("greeting.button_clicks", {
+          action: "greet",
+        })
+
+        return createGreetingResult(clickCount)
+      }),
+    getClickCount: () => repository.getCount(),
   }
 }

@@ -39,7 +39,7 @@ services:
       - OTEL_SERVICE_NAME=hello-world-nextjs
       - OTEL_LOGS_EXPORTER=none
       - OTEL_TRACES_EXPORTER=none
-      - OTEL_METRICS_EXPORTER=none
+      - OTEL_METRICS_EXPORTER=otlp
       - OTEL_METRIC_EXPORT_INTERVAL=5000
     depends_on:
       - prometheus

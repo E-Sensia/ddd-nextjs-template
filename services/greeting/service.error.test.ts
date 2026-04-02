@@ -1,77 +1,45 @@
-import { inject } from "../../utils/injection/inject"
-import {
-  createGreetingService,
-  withLogger,
-  withMetrics,
-  withTracer,
-  withRepository,
-} from "./inject"
+import { createGreetingService } from "./service"
 import { createLoggerStub } from "../../domain/logging/stub/implementation"
-import {
-  createMetricsRegistryStub,
-  createTracerStub,
-} from "../../domain/telemetry/stub/implementation"
+import { createMetricsRegistryStub, createTracerStub } from "../../domain/telemetry/stub/implementation"
 import { createClickRepositoryStub } from "../../domain/greeting/stub/implementation"
 
 describe("GreetingService — expected errors", () => {
-  const setup = () => {
-    const logger = createLoggerStub()
-    const metrics = createMetricsRegistryStub()
-    const tracer = createTracerStub()
-    const repository = createClickRepositoryStub()
-    return { logger, metrics, tracer, repository }
-  }
+  const setup = () => ({
+    logger: createLoggerStub(),
+    metrics: createMetricsRegistryStub(),
+    tracer: createTracerStub(),
+    repository: createClickRepositoryStub(),
+  })
 
   it("propagates error when logger throws", async () => {
-    const { metrics, tracer, repository } = setup()
-    const logger = createLoggerStub()
-    logger.info = () => {
+    const deps = setup()
+    deps.logger.info = () => {
       throw new Error("Logger write failed")
     }
 
-    const svc = inject(
-      createGreetingService,
-      withLogger(logger),
-      withMetrics(metrics),
-      withTracer(tracer),
-      withRepository(repository),
-    )
+    const svc = createGreetingService(deps)
 
     await expect(svc.greet()).rejects.toThrow("Logger write failed")
   })
 
   it("propagates error when metrics incrementCounter throws", async () => {
-    const { logger, tracer, repository } = setup()
-    const metrics = createMetricsRegistryStub()
-    metrics.incrementCounter = () => {
+    const deps = setup()
+    deps.metrics.incrementCounter = () => {
       throw new Error("Metrics backend unavailable")
     }
 
-    const svc = inject(
-      createGreetingService,
-      withLogger(logger),
-      withMetrics(metrics),
-      withTracer(tracer),
-      withRepository(repository),
-    )
+    const svc = createGreetingService(deps)
 
     await expect(svc.greet()).rejects.toThrow("Metrics backend unavailable")
   })
 
   it("propagates error when repository throws", async () => {
-    const { logger, metrics, tracer } = setup()
-    const repository = createClickRepositoryStub()
-    repository.increment = async () => {
+    const deps = setup()
+    deps.repository.increment = async () => {
       throw new Error("Repository unavailable")
     }
 
-    const svc = inject(
-      createGreetingService,
-      withLogger(logger),
-      withMetrics(metrics),
-      withTracer(tracer),
-      withRepository(repository),
-    )
+    const svc = createGreetingService(deps)
 
     await expect(svc.greet()).rejects.toThrow("Repository unavailable")
   })
