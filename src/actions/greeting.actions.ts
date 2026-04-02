@@ -11,3 +11,8 @@ export async function greetAction(): Promise<GreetResponse> {
     clickCount: result.clickCount,
   })
 }
+
+export async function triggerErrorAction(): Promise<void> {
+  const svc = getGreetingService()
+  svc.logger.error("Test error triggered", { source: "debug-button" })
+}

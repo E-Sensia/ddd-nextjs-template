@@ -1,34 +1,22 @@
-import { diag, DiagConsoleLogger, DiagLogLevel } from "@opentelemetry/api"
 import { NodeSDK } from "@opentelemetry/sdk-node"
-import { OTLPMetricExporter } from "@opentelemetry/exporter-metrics-otlp-proto"
-import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics"
 
-diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.INFO)
+const OTEL_KEY = Symbol.for("otel.sdk")
 
-const exportIntervalMillis = parseInt(
-  process.env.OTEL_METRIC_EXPORT_INTERVAL ?? "5000",
-  10,
-)
+type OtelGlobal = typeof globalThis & { [key: symbol]: NodeSDK }
 
-const metricExporter = new OTLPMetricExporter()
+if (!(globalThis as OtelGlobal)[OTEL_KEY]) {
+  const sdk = new NodeSDK({})
+  sdk.start()
+  ;(globalThis as OtelGlobal)[OTEL_KEY] = sdk
 
-const sdk = new NodeSDK({
-  metricReaders: [
-    new PeriodicExportingMetricReader({
-      exporter: metricExporter,
-      exportIntervalMillis,
-    }),
-  ],
-})
-
-sdk.start()
-
-console.log(
-  `[OTEL] Metrics SDK started — exporting every ${exportIntervalMillis}ms`,
-)
+  console.log("[OTEL] SDK started")
+}
 
 export async function shutdown(): Promise<void> {
-  console.log("[OTEL] Shutting down metrics SDK...")
+  const sdk = (globalThis as OtelGlobal)[OTEL_KEY]
+  if (!sdk) return
+  console.log("[OTEL] Shutting down SDK...")
   await sdk.shutdown()
-  console.log("[OTEL] Metrics SDK shut down.")
+  delete (globalThis as OtelGlobal)[OTEL_KEY]
+  console.log("[OTEL] SDK shut down.")
 }

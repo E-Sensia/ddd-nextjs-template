@@ -2,16 +2,23 @@
 
 import { useState } from "react"
 import { Button } from "../components/button/button"
-import { greetAction } from "../actions/greeting.actions"
+import { greetAction, triggerErrorAction } from "../actions/greeting.actions"
 
 export default function HomePage() {
   const [greeting, setGreeting] = useState<string | null>(null)
   const [clickCount, setClickCount] = useState(0)
+  const [errorFired, setErrorFired] = useState(false)
 
   const handleClick = async () => {
     const result = await greetAction()
     setGreeting(result.message)
     setClickCount(result.clickCount)
+  }
+
+  const handleError = async () => {
+    await triggerErrorAction()
+    setErrorFired(true)
+    setTimeout(() => setErrorFired(false), 2000)
   }
 
   return (
@@ -26,6 +33,11 @@ export default function HomePage() {
           </p>
         </div>
       )}
+      <Button
+        label={errorFired ? "Error sent!" : "Trigger error log"}
+        onClick={handleError}
+        variant="secondary"
+      />
     </div>
   )
 }
