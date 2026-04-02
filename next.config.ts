@@ -1,10 +1,12 @@
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   serverExternalPackages: [
+    "@opentelemetry/api",
     "@opentelemetry/sdk-node",
-    "@opentelemetry/exporter-metrics-otlp-proto",
     "@opentelemetry/sdk-metrics",
+    "@opentelemetry/exporter-metrics-otlp-proto",
   ],
 }
 

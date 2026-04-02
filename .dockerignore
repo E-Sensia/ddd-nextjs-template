@@ -2,7 +2,7 @@ node_modules
 .next
 .git
 *.md
-Dockerfile
+Dockerfile.cloud
 Dockerfile.local
 docker-compose.yml
 .dockerignore

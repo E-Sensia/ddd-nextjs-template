@@ -3,21 +3,27 @@ import {
   createGreetingService,
   withLogger,
   withMetrics,
+  withTracer,
   withRepository,
 } from "./inject"
 import { createLoggerStub } from "../../domain/logging/stub/implementation"
-import { createMetricsRegistryStub } from "../../domain/telemetry/stub/implementation"
+import {
+  createMetricsRegistryStub,
+  createTracerStub,
+} from "../../domain/telemetry/stub/implementation"
 import { createClickRepositoryStub } from "../../domain/greeting/stub/implementation"
 
 describe("GreetingService — stress & unexpected", () => {
   const setup = () => {
     const logger = createLoggerStub()
     const metrics = createMetricsRegistryStub()
+    const tracer = createTracerStub()
     const repository = createClickRepositoryStub()
     const svc = inject(
       createGreetingService,
       withLogger(logger),
       withMetrics(metrics),
+      withTracer(tracer),
       withRepository(repository),
     )
     return { svc, logger, metrics, repository }

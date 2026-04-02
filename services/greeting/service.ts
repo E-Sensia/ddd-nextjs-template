@@ -1,5 +1,5 @@
 import { Logger } from "../../domain/logging/model"
-import { MetricsRegistry } from "../../domain/telemetry/model"
+import { MetricsRegistry, Tracer } from "../../domain/telemetry/model"
 import {
   ClickRepository,
   createGreetingResult,
@@ -9,17 +9,20 @@ import {
 export class GreetingService {
   logger!: Logger
   metrics!: MetricsRegistry
+  tracer!: Tracer
   repository!: ClickRepository
 
   async greet(): Promise<GreetingResult> {
-    const clickCount = await this.repository.increment()
+    return this.tracer.span("GreetingService.greet", async () => {
+      const clickCount = await this.repository.increment()
 
-    this.logger.info("Button clicked", { clickCount })
-    this.metrics.incrementCounter("greeting.button_clicks", {
-      action: "greet",
+      this.logger.info("Button clicked", { clickCount })
+      this.metrics.incrementCounter("greeting.button_clicks", {
+        action: "greet",
+      })
+
+      return createGreetingResult(clickCount)
     })
-
-    return createGreetingResult(clickCount)
   }
 
   async getClickCount(): Promise<number> {

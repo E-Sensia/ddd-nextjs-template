@@ -1,4 +1,4 @@
-import { MetricsRegistry, MetricAttributes } from "../model"
+import { MetricsRegistry, MetricAttributes, Tracer } from "../model"
 
 type RecordedMetric = {
   name: string
@@ -22,5 +22,18 @@ export function createMetricsRegistryStub(): MetricsRegistry & {
     recordHistogram: (name, value, attributes) => {
       histograms.push({ name, value, attributes })
     },
+  }
+}
+
+export function createTracerStub(): Tracer & { spans: string[] } {
+  const spans: string[] = []
+
+  return {
+    spans,
+    span: async <T>(name: string, fn: () => Promise<T>): Promise<T> => {
+      spans.push(name)
+      return fn()
+    },
+    getContext: () => null,
   }
 }

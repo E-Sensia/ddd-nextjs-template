@@ -1,17 +1,26 @@
 import { Logger } from "../model"
-import { MetricsRegistry } from "../../telemetry/model"
+import { MetricsRegistry, Tracer } from "../../telemetry/model"
 
-export function createConsoleLogger(metrics?: MetricsRegistry): Logger {
+type LoggerDeps = {
+  metrics?: MetricsRegistry
+  tracer?: Tracer
+}
+
+export function createConsoleLogger(deps?: LoggerDeps): Logger {
+  const { metrics, tracer } = deps ?? {}
+
   const write = (
     level: string,
     message: string,
     context?: Record<string, unknown>,
   ) => {
+    const traceCtx = tracer?.getContext()
     const entry = JSON.stringify({
       timestamp: new Date().toISOString(),
       level: level.toUpperCase(),
       message,
       ...context,
+      ...(traceCtx && { traceId: traceCtx.traceId, spanId: traceCtx.spanId }),
     })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(console as any)[level](entry)

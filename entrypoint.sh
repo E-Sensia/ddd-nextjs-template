@@ -7,4 +7,4 @@ if [ -n "$ECS_CONTAINER_METADATA_URI_V4" ]; then
   export OTEL_RESOURCE_ATTRIBUTES=$OTEL_RESOURCE_ATTRIBUTES,service.instance.id=$TASK_ID
 fi
 
-exec pnpm run start --port $PORT
+exec node server.js

@@ -1,0 +1,47 @@
+ARG NODE_VERSION=23
+
+# ---------- Stage 1: Install + Build ----------
+FROM node:${NODE_VERSION}-slim AS builder
+
+ARG APP_VERSION=dev
+
+RUN npm install -g pnpm
+
+WORKDIR /src
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+
+ENV APP_VERSION=$APP_VERSION
+ENV NEXT_PUBLIC_APP_VERSION=$APP_VERSION
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN pnpm run build
+
+# ---------- Stage 2: Production ----------
+FROM node:${NODE_VERSION}-slim AS runner
+
+RUN apt-get update && apt-get install -y ca-certificates curl jq && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV OTEL_LOG_LEVEL=info
+
+COPY --from=builder /src/public ./public
+COPY --from=builder /src/.next/standalone ./
+COPY --from=builder /src/.next/static ./.next/static
+COPY --from=builder /src/entrypoint.sh ./
+
+RUN chmod +x ./entrypoint.sh
+
+EXPOSE $PORT
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=10s \
+  CMD curl -f http://localhost:$PORT/api/health || exit 1
+
+ENTRYPOINT ["./entrypoint.sh"]

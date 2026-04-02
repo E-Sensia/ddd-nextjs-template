@@ -3,24 +3,30 @@ import {
   createGreetingService,
   withLogger,
   withMetrics,
+  withTracer,
   withRepository,
 } from "./inject"
 import { createLoggerStub } from "../../domain/logging/stub/implementation"
-import { createMetricsRegistryStub } from "../../domain/telemetry/stub/implementation"
+import {
+  createMetricsRegistryStub,
+  createTracerStub,
+} from "../../domain/telemetry/stub/implementation"
 import { createClickRepositoryStub } from "../../domain/greeting/stub/implementation"
 
 describe("GreetingService — happy paths", () => {
   const setup = () => {
     const logger = createLoggerStub()
     const metrics = createMetricsRegistryStub()
+    const tracer = createTracerStub()
     const repository = createClickRepositoryStub()
     const svc = inject(
       createGreetingService,
       withLogger(logger),
       withMetrics(metrics),
+      withTracer(tracer),
       withRepository(repository),
     )
-    return { svc, logger, metrics, repository }
+    return { svc, logger, metrics, tracer, repository }
   }
 
   it("returns a greeting with click count 1 on first call", async () => {
@@ -58,6 +64,13 @@ describe("GreetingService — happy paths", () => {
     expect(metrics.counters).toHaveLength(1)
     expect(metrics.counters[0].name).toBe("greeting.button_clicks")
     expect(metrics.counters[0].attributes).toEqual({ action: "greet" })
+  })
+
+  it("creates a trace span", async () => {
+    const { svc, tracer } = setup()
+    await svc.greet()
+
+    expect(tracer.spans).toEqual(["GreetingService.greet"])
   })
 
   it("tracks click count via getClickCount", async () => {

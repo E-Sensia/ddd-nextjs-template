@@ -1,5 +1,5 @@
-import { metrics } from "@opentelemetry/api"
-import { MetricsRegistry, MetricAttributes } from "../model"
+import { metrics, trace, SpanStatusCode, isSpanContextValid } from "@opentelemetry/api"
+import { MetricsRegistry, MetricAttributes, Tracer } from "../model"
 import type { Counter, Histogram } from "@opentelemetry/api"
 
 export function createOtelMetricsRegistry(
@@ -26,6 +26,34 @@ export function createOtelMetricsRegistry(
         histograms.set(name, meter.createHistogram(name))
       }
       histograms.get(name)!.record(value, attributes)
+    },
+  }
+}
+
+export function createOtelTracer(serviceName: string): Tracer {
+  const tracer = trace.getTracer(serviceName)
+
+  return {
+    span: async <T>(name: string, fn: () => Promise<T>): Promise<T> => {
+      return tracer.startActiveSpan(name, async (span) => {
+        try {
+          const result = await fn()
+          span.end()
+          return result
+        } catch (err) {
+          span.setStatus({ code: SpanStatusCode.ERROR })
+          if (err instanceof Error) span.recordException(err)
+          span.end()
+          throw err
+        }
+      })
+    },
+    getContext: () => {
+      const span = trace.getActiveSpan()
+      if (!span) return null
+      const ctx = span.spanContext()
+      if (!isSpanContextValid(ctx)) return null
+      return { traceId: ctx.traceId, spanId: ctx.spanId }
     },
   }
 }
