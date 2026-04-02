@@ -1,18 +1,26 @@
 import { inject } from "../../utils/injection/inject"
-import { createGreetingService, withLogger, withMetrics } from "./inject"
+import {
+  createGreetingService,
+  withLogger,
+  withMetrics,
+  withRepository,
+} from "./inject"
 import { createLoggerStub } from "../../domain/logging/stub/implementation"
 import { createMetricsRegistryStub } from "../../domain/telemetry/stub/implementation"
+import { createClickRepositoryStub } from "../../domain/greeting/stub/implementation"
 
 describe("GreetingService — stress & unexpected", () => {
   const setup = () => {
     const logger = createLoggerStub()
     const metrics = createMetricsRegistryStub()
+    const repository = createClickRepositoryStub()
     const svc = inject(
       createGreetingService,
       withLogger(logger),
       withMetrics(metrics),
+      withRepository(repository),
     )
-    return { svc, logger, metrics }
+    return { svc, logger, metrics, repository }
   }
 
   it("handles 50 concurrent greet calls", async () => {
@@ -22,7 +30,7 @@ describe("GreetingService — stress & unexpected", () => {
     const results = await Promise.all(calls)
 
     expect(results).toHaveLength(50)
-    expect(svc.getClickCount()).toBe(50)
+    expect(await svc.getClickCount()).toBe(50)
     expect(metrics.counters).toHaveLength(50)
   })
 

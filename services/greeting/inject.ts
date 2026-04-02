@@ -2,6 +2,7 @@ import { Configurator } from "../../utils/injection/inject"
 import { GreetingService } from "./service"
 import { Logger } from "../../domain/logging/model"
 import { MetricsRegistry } from "../../domain/telemetry/model"
+import { ClickRepository } from "../../domain/greeting/model"
 
 export const createGreetingService = (): GreetingService =>
   new GreetingService()
@@ -17,5 +18,13 @@ export const withMetrics = (
 ): Configurator<GreetingService> => {
   return (svc) => {
     svc.metrics = metrics
+  }
+}
+
+export const withRepository = (
+  repository: ClickRepository,
+): Configurator<GreetingService> => {
+  return (svc) => {
+    svc.repository = repository
   }
 }

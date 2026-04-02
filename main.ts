@@ -2,10 +2,12 @@ import { Config } from "./config/config"
 import { inject } from "./utils/injection/inject"
 import { createConsoleLogger } from "./domain/logging/console-writer/implementation"
 import { createOtelMetricsRegistry } from "./domain/telemetry/otel/implementation"
+import { createInMemoryClickRepository } from "./domain/greeting/memory/implementation"
 import {
   createGreetingService,
   withLogger,
   withMetrics,
+  withRepository,
 } from "./services/greeting/inject"
 import type { GreetingService } from "./services/greeting/service"
 import { metrics } from "@opentelemetry/api"
@@ -31,9 +33,12 @@ function bootstrap() {
   const logCounter = metrics.getMeter(cfg.otelServiceName).createCounter("logs")
   const logger = createConsoleLogger(logCounter)
 
+  const repository = createInMemoryClickRepository()
+
   greetingService = inject(
     createGreetingService,
     withLogger(logger),
     withMetrics(metricsRegistry),
+    withRepository(repository),
   )
 }

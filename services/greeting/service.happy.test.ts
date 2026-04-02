@@ -1,18 +1,26 @@
 import { inject } from "../../utils/injection/inject"
-import { createGreetingService, withLogger, withMetrics } from "./inject"
+import {
+  createGreetingService,
+  withLogger,
+  withMetrics,
+  withRepository,
+} from "./inject"
 import { createLoggerStub } from "../../domain/logging/stub/implementation"
 import { createMetricsRegistryStub } from "../../domain/telemetry/stub/implementation"
+import { createClickRepositoryStub } from "../../domain/greeting/stub/implementation"
 
 describe("GreetingService — happy paths", () => {
   const setup = () => {
     const logger = createLoggerStub()
     const metrics = createMetricsRegistryStub()
+    const repository = createClickRepositoryStub()
     const svc = inject(
       createGreetingService,
       withLogger(logger),
       withMetrics(metrics),
+      withRepository(repository),
     )
-    return { svc, logger, metrics }
+    return { svc, logger, metrics, repository }
   }
 
   it("returns a greeting with click count 1 on first call", async () => {
@@ -55,10 +63,19 @@ describe("GreetingService — happy paths", () => {
   it("tracks click count via getClickCount", async () => {
     const { svc } = setup()
 
-    expect(svc.getClickCount()).toBe(0)
+    expect(await svc.getClickCount()).toBe(0)
     await svc.greet()
-    expect(svc.getClickCount()).toBe(1)
+    expect(await svc.getClickCount()).toBe(1)
     await svc.greet()
-    expect(svc.getClickCount()).toBe(2)
+    expect(await svc.getClickCount()).toBe(2)
+  })
+
+  it("delegates state to repository", async () => {
+    const { svc, repository } = setup()
+
+    await svc.greet()
+    await svc.greet()
+
+    expect(repository.count).toBe(2)
   })
 })

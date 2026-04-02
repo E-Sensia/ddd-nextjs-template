@@ -6,6 +6,13 @@ export type GreetingResult = {
   timestamp: Date
 }
 
+// --- Port ---
+
+export type ClickRepository = {
+  getCount: () => Promise<number>
+  increment: () => Promise<number>
+}
+
 // --- Methods (pure, testable) ---
 
 export function formatGreeting(clickCount: number): string {
