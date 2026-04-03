@@ -1,4 +1,4 @@
-import { createGreetingService } from "@services/greeting"
+import { GreetingService } from "@services/greeting"
 import { createLoggerStub } from "@domain/logging"
 import { createMetricsRegistryStub, createTracerStub } from "@domain/telemetry"
 import { createClickRepositoryStub } from "@domain/greeting"
@@ -9,7 +9,7 @@ describe("GreetingService — happy paths", () => {
     const metrics = createMetricsRegistryStub()
     const tracer = createTracerStub()
     const repository = createClickRepositoryStub()
-    const svc = createGreetingService({ logger, metrics, tracer, repository })
+    const svc = new GreetingService({ logger, metrics, tracer, repository })
     return { svc, logger, metrics, tracer, repository }
   }
 

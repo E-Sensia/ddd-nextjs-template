@@ -1,5 +1,1 @@
-export {
-  type GreetingService,
-  type GreetingServiceDeps,
-  createGreetingService,
-} from "./service"
+export { GreetingService } from "./service"

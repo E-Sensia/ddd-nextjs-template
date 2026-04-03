@@ -2,37 +2,40 @@ import { Logger } from "@domain/logging"
 import { MetricsRegistry, Tracer } from "@domain/telemetry"
 import { ClickRepository, createGreetingResult, GreetingResult } from "@domain/greeting"
 
-export type GreetingServiceDeps = {
+type GreetingServiceDeps = {
   logger: Logger
   metrics: MetricsRegistry
   tracer: Tracer
   repository: ClickRepository
 }
 
-export type GreetingService = {
-  logger: Logger
-  greet: () => Promise<GreetingResult>
-  getClickCount: () => Promise<number>
-}
+export class GreetingService {
+  readonly logger: Logger
+  private readonly metrics: MetricsRegistry
+  private readonly tracer: Tracer
+  private readonly repository: ClickRepository
 
-export function createGreetingService(
-  deps: GreetingServiceDeps,
-): GreetingService {
-  const { logger, metrics, tracer, repository } = deps
+  constructor(deps: GreetingServiceDeps) {
+    this.logger = deps.logger
+    this.metrics = deps.metrics
+    this.tracer = deps.tracer
+    this.repository = deps.repository
+  }
 
-  return {
-    logger,
-    greet: () =>
-      tracer.span("GreetingService.greet", async () => {
-        const clickCount = await repository.increment()
+  async greet(): Promise<GreetingResult> {
+    return this.tracer.span("GreetingService.greet", async () => {
+      const clickCount = await this.repository.increment()
 
-        logger.info("Button clicked", { clickCount })
-        metrics.incrementCounter("greeting.button_clicks", {
-          action: "greet",
-        })
+      this.logger.info("Button clicked", { clickCount })
+      this.metrics.incrementCounter("greeting.button_clicks", {
+        action: "greet",
+      })
 
-        return createGreetingResult(clickCount)
-      }),
-    getClickCount: () => repository.getCount(),
+      return createGreetingResult(clickCount)
+    })
+  }
+
+  async getClickCount(): Promise<number> {
+    return this.repository.getCount()
   }
 }

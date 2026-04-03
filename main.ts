@@ -2,7 +2,7 @@ import { Config } from "@config/config"
 import { createConsoleLogger } from "@domain/logging"
 import { createOtelMetricsRegistry, createOtelTracer } from "@domain/telemetry"
 import { createInMemoryClickRepository } from "@domain/greeting"
-import { createGreetingService, GreetingService } from "@services/greeting"
+import { GreetingService } from "@services/greeting"
 
 let greetingService: GreetingService
 
@@ -24,7 +24,7 @@ function bootstrap() {
   const logger = createConsoleLogger({ metrics, tracer })
   const repository = createInMemoryClickRepository()
 
-  greetingService = createGreetingService({
+  greetingService = new GreetingService({
     logger,
     metrics,
     tracer,

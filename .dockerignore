@@ -1,7 +1,15 @@
 node_modules
 .next
 .git
+.github
+coverage
+test-results
+playwright-report
 *.md
+.env*
+.DS_Store
+.vscode
+.idea
 Dockerfile.cloud
 Dockerfile.local
 docker-compose.yml

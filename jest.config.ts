@@ -11,6 +11,23 @@ const config: Config = {
     "^@utils/(.*)$": "<rootDir>/utils/$1",
     "^@config/(.*)$": "<rootDir>/config/$1",
   },
+  collectCoverage: true,
+  coverageDirectory: "coverage",
+  coveragePathIgnorePatterns: [
+    "/node_modules/",
+    "/domain/.*/otel/",
+    "/domain/.*/console-writer/",
+    "/domain/.*/memory/",
+    "/index\\.ts$",
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
 }
 
 export default config
