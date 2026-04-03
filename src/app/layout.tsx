@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Hello World — DDD Next.js",
-  description: "Hello World app with DDD architecture and OpenTelemetry",
+  title: "DDD Next.js Template",
+  description: "Next.js with Domain-Driven Architecture and OpenTelemetry",
 }
 
 export default function RootLayout({

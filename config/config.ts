@@ -5,7 +5,7 @@ const LogLevel = z.enum(["log", "info", "warn", "error", "debug"])
 const configSchema = z.object({
   port: z.coerce.number().int().min(1).max(65535).default(3000),
   logLevel: LogLevel.default("info"),
-  otelServiceName: z.string().min(1).default("hello-world-nextjs"),
+  otelServiceName: z.string().min(1).default("my-service"),
   otelServiceVersion: z.string().min(1).default("0.1.0"),
 })
 
