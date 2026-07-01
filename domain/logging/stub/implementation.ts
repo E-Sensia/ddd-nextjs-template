@@ -11,10 +11,9 @@ export function createLoggerStub(): Logger & { entries: LogEntry[] } {
 
   return {
     entries,
-    log: log("log"),
+    debug: log("debug"),
     info: log("info"),
     warn: log("warn"),
     error: log("error"),
-    debug: log("debug"),
   }
 }

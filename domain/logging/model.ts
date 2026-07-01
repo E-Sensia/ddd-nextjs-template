@@ -1,6 +1,8 @@
+import type { ConversationId, RequestId } from "../shared/types"
+
 // --- Objects ---
 
-export type LogLevel = "log" | "info" | "warn" | "error" | "debug"
+export type LogLevel = "debug" | "info" | "warn" | "error"
 
 export type LogEntry = {
   level: LogLevel
@@ -17,12 +19,22 @@ export function createLogEntry(
   return { level, message, timestamp: new Date(), context }
 }
 
+/**
+ * Correlation fields stamped on every log line of a unit of work.
+ * conversation_id is the business correlation id of a call — minted once at
+ * the telephony edge, propagated via the X-Conversation-Id header, never
+ * invented downstream. request_id is minted at each service edge.
+ */
+export type LogContext = {
+  conversationId?: ConversationId
+  requestId?: RequestId
+}
+
 // --- Port ---
 
 export type Logger = {
-  log: (message: string, context?: Record<string, unknown>) => void
+  debug: (message: string, context?: Record<string, unknown>) => void
   info: (message: string, context?: Record<string, unknown>) => void
   warn: (message: string, context?: Record<string, unknown>) => void
   error: (message: string, context?: Record<string, unknown>) => void
-  debug: (message: string, context?: Record<string, unknown>) => void
 }

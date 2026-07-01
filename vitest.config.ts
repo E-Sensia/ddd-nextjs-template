@@ -20,12 +20,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reportsDirectory: "coverage",
-      exclude: [
-        "domain/**/otel/**",
-        "domain/**/console-writer/**",
-        "domain/**/memory/**",
-        "**/index.ts",
-      ],
+      exclude: ["domain/**/otel/**", "domain/**/memory/**", "**/index.ts"],
       thresholds: {
         branches: 80,
         functions: 80,

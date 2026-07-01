@@ -38,7 +38,7 @@ describe("GreetingService — happy paths", () => {
     await svc.greet()
 
     expect(logger.entries).toHaveLength(1)
-    expect(logger.entries[0].message).toBe("Button clicked")
+    expect(logger.entries[0].message).toBe("button clicked")
     expect(logger.entries[0].context).toEqual({ clickCount: 1 })
   })
 

@@ -51,6 +51,9 @@ function bootstrap() {
   )
   tracerInstance = createOtelTracer(cfg.otelServiceName)
   loggerInstance = createConsoleLogger({
+    service: cfg.otelServiceName,
+    version: cfg.otelServiceVersion,
+    format: cfg.logFormat,
     metrics: metricsRegistry,
     tracer: tracerInstance,
   })

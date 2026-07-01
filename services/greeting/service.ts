@@ -30,7 +30,7 @@ export class GreetingService {
     return this.tracer.span("GreetingService.greet", async () => {
       const clickCount = await this.repository.increment()
 
-      this.logger.info("Button clicked", { clickCount })
+      this.logger.info("button clicked", { clickCount })
       this.metrics.incrementCounter("greeting.button_clicks", {
         action: "greet",
       })
