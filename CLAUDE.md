@@ -6,6 +6,7 @@ This project follows a strict Domain-Driven Architecture. See the full reference
 @~/.claude/skills/ddd-refactor/references/architecture-typescript.md
 
 Key layers:
+
 - `domain/` — ports (interfaces), pure functions, stubs. No framework deps.
 - `services/` — orchestration classes with constructor-injected deps.
 - `src/` — Next.js delivery layer (pages, server actions, components).

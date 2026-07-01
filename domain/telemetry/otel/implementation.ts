@@ -1,5 +1,10 @@
-import { metrics, trace, SpanStatusCode, isSpanContextValid } from "@opentelemetry/api"
-import { MetricsRegistry, MetricAttributes, Tracer } from "../model"
+import {
+  metrics,
+  trace,
+  SpanStatusCode,
+  isSpanContextValid,
+} from "@opentelemetry/api"
+import type { MetricsRegistry, MetricAttributes, Tracer } from "../model"
 import type { Counter, Histogram } from "@opentelemetry/api"
 
 export function createOtelMetricsRegistry(

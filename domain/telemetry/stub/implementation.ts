@@ -1,4 +1,4 @@
-import { MetricsRegistry, MetricAttributes, Tracer } from "../model"
+import type { MetricsRegistry, MetricAttributes, Tracer } from "../model"
 
 type RecordedMetric = {
   name: string

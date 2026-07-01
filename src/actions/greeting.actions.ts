@@ -1,8 +1,8 @@
 "use server"
 
 import { getGreetingService, getLogger } from "../../main"
-import { GreetResponse, greetResponseSchema } from "./greeting.dto"
-import { ActionResult } from "@utils"
+import { type GreetResponse, greetResponseSchema } from "./greeting.dto"
+import type { ActionResult } from "@utils"
 
 export async function greetAction(): Promise<ActionResult<GreetResponse>> {
   try {
