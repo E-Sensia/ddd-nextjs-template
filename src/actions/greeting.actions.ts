@@ -1,23 +1,28 @@
 "use server"
 
 import { getGreetingService, getLogger } from "../../main"
-import { type GreetResponse, greetResponseSchema } from "./greeting.dto"
 import { type ActionResult, toActionError } from "../mappers/errors.mapper"
+import {
+  type GreetResponse,
+  toGreetResponse,
+  toTriggerErrorInput,
+} from "../mappers/greeting.mapper"
 
 export async function greetAction(): Promise<ActionResult<GreetResponse>> {
   try {
-    const svc = getGreetingService()
-    const result = await svc.greet()
-    const data = greetResponseSchema.parse({
-      message: result.message,
-      clickCount: result.clickCount,
-    })
-    return { ok: true, data }
+    const result = await getGreetingService().greet()
+    return { ok: true, data: toGreetResponse(result) }
   } catch (err) {
     return toActionError(err, getLogger())
   }
 }
 
-export async function triggerErrorAction(): Promise<void> {
-  getLogger().error("Test error triggered", { source: "debug-button" })
+export async function triggerErrorAction(
+  raw: unknown,
+): Promise<ActionResult<null>> {
+  const input = toTriggerErrorInput(raw)
+  if (!input) return { ok: false, error: "INVALID_REQUEST" }
+
+  getLogger().error("test error triggered", { source: input.source })
+  return { ok: true, data: null }
 }

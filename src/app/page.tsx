@@ -22,7 +22,7 @@ export default function HomePage() {
   }
 
   const handleError = async () => {
-    await triggerErrorAction()
+    await triggerErrorAction({ source: "debug-button" })
     setErrorFired(true)
     setTimeout(() => setErrorFired(false), 2000)
   }
