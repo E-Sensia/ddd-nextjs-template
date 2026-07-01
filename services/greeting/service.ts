@@ -2,7 +2,7 @@ import { Logger } from "@domain/logging"
 import { MetricsRegistry, Tracer } from "@domain/telemetry"
 import { ClickRepository, createGreetingResult, GreetingResult } from "@domain/greeting"
 
-type GreetingServiceDeps = {
+export type GreetingServiceDeps = {
   logger: Logger
   metrics: MetricsRegistry
   tracer: Tracer
@@ -10,7 +10,7 @@ type GreetingServiceDeps = {
 }
 
 export class GreetingService {
-  readonly logger: Logger
+  private readonly logger: Logger
   private readonly metrics: MetricsRegistry
   private readonly tracer: Tracer
   private readonly repository: ClickRepository

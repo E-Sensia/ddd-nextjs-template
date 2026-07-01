@@ -1,1 +1,2 @@
-export { GreetingService } from "./service"
+export { GreetingService, type GreetingServiceDeps } from "./service"
+export { createGreetingService } from "./inject"

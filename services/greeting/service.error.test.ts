@@ -1,4 +1,4 @@
-import { GreetingService } from "@services/greeting"
+import { createGreetingService } from "@services/greeting"
 import { createLoggerStub } from "@domain/logging"
 import { createMetricsRegistryStub, createTracerStub } from "@domain/telemetry"
 import { createClickRepositoryStub } from "@domain/greeting"
@@ -17,7 +17,7 @@ describe("GreetingService — expected errors", () => {
       throw new Error("Logger write failed")
     }
 
-    const svc = new GreetingService(deps)
+    const svc = createGreetingService(deps)
 
     await expect(svc.greet()).rejects.toThrow("Logger write failed")
   })
@@ -28,7 +28,7 @@ describe("GreetingService — expected errors", () => {
       throw new Error("Metrics backend unavailable")
     }
 
-    const svc = new GreetingService(deps)
+    const svc = createGreetingService(deps)
 
     await expect(svc.greet()).rejects.toThrow("Metrics backend unavailable")
   })
@@ -39,7 +39,7 @@ describe("GreetingService — expected errors", () => {
       throw new Error("Repository unavailable")
     }
 
-    const svc = new GreetingService(deps)
+    const svc = createGreetingService(deps)
 
     await expect(svc.greet()).rejects.toThrow("Repository unavailable")
   })

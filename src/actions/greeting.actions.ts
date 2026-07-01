@@ -1,6 +1,6 @@
 "use server"
 
-import { getGreetingService } from "../../main"
+import { getGreetingService, getLogger } from "../../main"
 import { GreetResponse, greetResponseSchema } from "./greeting.dto"
 import { ActionResult } from "@utils"
 
@@ -14,8 +14,7 @@ export async function greetAction(): Promise<ActionResult<GreetResponse>> {
     })
     return { success: true, data }
   } catch (err) {
-    const svc = getGreetingService()
-    svc.logger.error("greetAction failed", {
+    getLogger().error("greetAction failed", {
       error: err instanceof Error ? err.message : String(err),
     })
     return { success: false, error: "Failed to process greeting" }
@@ -23,6 +22,5 @@ export async function greetAction(): Promise<ActionResult<GreetResponse>> {
 }
 
 export async function triggerErrorAction(): Promise<void> {
-  const svc = getGreetingService()
-  svc.logger.error("Test error triggered", { source: "debug-button" })
+  getLogger().error("Test error triggered", { source: "debug-button" })
 }
