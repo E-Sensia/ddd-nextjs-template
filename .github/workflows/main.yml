@@ -1,19 +1,72 @@
-name: CI
+name: Build & deploy
 
 on:
   push:
     branches: [main, develop]
+    tags: ["scw-test-*", "scw-prod-*"]
 
 jobs:
+  vars:
+    name: Set variables
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.tag.outputs.environment }}
+      stage: ${{ steps.tag.outputs.stage }}
+      app_name: ddd-nextjs-template
+    steps:
+      - name: Parse tag
+        id: tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/scw-* ]]; then
+            TAG="${{ github.ref_name }}"
+            ENVIRONMENT=$(echo "$TAG" | cut -d'-' -f2)
+            STAGE=$(echo "$TAG" | cut -d'-' -f3)
+          else
+            ENVIRONMENT=""
+            STAGE="${{ (github.ref == 'refs/heads/main') && 'prod' || 'si' }}"
+          fi
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          echo "stage=$STAGE" >> $GITHUB_OUTPUT
+
   tests:
     uses: ./.github/workflows/test.yml
+    secrets: inherit
 
-  # Add deployment jobs here per environment:
-  #
-  # deploy-aws:
-  #   needs: [tests]
-  #   uses: ./.github/workflows/build-image-deploy-aws.yml
-  #   with:
-  #     stage: ${{ github.ref == 'refs/heads/main' && 'prod' || 'preprod' }}
-  #     dockerfile: Dockerfile
-  #   secrets: inherit
+  build-image-deploy-aws:
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    name: Build image and deploy to AWS
+    uses: ./.github/workflows/build-image-deploy-aws.yml
+    needs: [vars, tests]
+    secrets: inherit
+    with:
+      stage: ${{ needs.vars.outputs.stage }}
+      dockerfile: Dockerfile.cloud
+      ecr_repository: ${{ needs.vars.outputs.app_name }}-repository
+      ecs_service: ${{ needs.vars.outputs.app_name }}-${{ needs.vars.outputs.stage }}-service
+      ecs_cluster: ${{ needs.vars.outputs.stage }}-cluster
+      ecs_task_definition_family: ${{ needs.vars.outputs.app_name }}-${{ needs.vars.outputs.stage }}-td
+      container_name: ${{ needs.vars.outputs.app_name }}-container
+
+  build-image-scw:
+    if: startsWith(github.ref, 'refs/tags/scw-')
+    name: Build and push Docker image
+    uses: ./.github/workflows/build-image-scw.yml
+    needs: [vars, tests]
+    secrets: inherit
+    with:
+      name: ${{ needs.vars.outputs.app_name }}
+      environment: ${{ needs.vars.outputs.environment }}
+      stage: ${{ needs.vars.outputs.stage }}
+      dockerfile: Dockerfile.cloud
+
+  deploy-kubernetes:
+    if: startsWith(github.ref, 'refs/tags/scw-')
+    name: Deploy to Kubernetes
+    uses: ./.github/workflows/deploy-kubernetes.yml
+    needs: [vars, build-image-scw]
+    secrets: inherit
+    with:
+      environment: ${{ needs.vars.outputs.environment }}
+      namespace: echo-${{ needs.vars.outputs.stage }}
+      deployment: ${{ needs.vars.outputs.app_name }}
+      image: ${{ needs.build-image-scw.outputs.image }}

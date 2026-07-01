@@ -1,0 +1,20 @@
+#!/bin/sh
+set -e
+
+echo "Running formatter..."
+make format
+
+echo "Running lint (eslint + tsc + depcruise)..."
+make lint
+
+echo "Checking for unstaged changes after formatting..."
+if ! git diff --quiet; then
+    echo ""
+    echo "Formatter made changes. Please review and stage them:"
+    git diff --name-only
+    echo ""
+    echo "Run 'git add -u' to stage the changes, then commit again."
+    exit 1
+fi
+
+echo "All checks passed!"

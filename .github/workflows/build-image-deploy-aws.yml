@@ -1,0 +1,91 @@
+name: Deploy to Amazon ECS
+
+on:
+  workflow_call:
+    inputs:
+      stage:
+        required: true
+        type: string
+      dockerfile:
+        required: true
+        type: string
+      ecr_repository:
+        required: true
+        type: string
+      ecs_service:
+        required: true
+        type: string
+      ecs_cluster:
+        required: true
+        type: string
+      ecs_task_definition_family:
+        required: true
+        type: string
+      container_name:
+        required: true
+        type: string
+
+env:
+  REGION: eu-west-3
+  DOCKERFILE: ${{ inputs.dockerfile }}
+  ECR_REPOSITORY: ${{ inputs.ecr_repository }}
+  ECS_TASK_DEFINITION_FAMILY: ${{ inputs.ecs_task_definition_family }}
+  ACCESS_KEY_ID: ${{ (inputs.stage == 'prod') && secrets.AWS_PROD_ACCESS_KEY_ID || secrets.AWS_PREPROD_ACCESS_KEY_ID }}
+  ACCESS_KEY_SECRET: ${{ (inputs.stage == 'prod') && secrets.AWS_PROD_ACCESS_KEY_SECRET || secrets.AWS_PREPROD_ACCESS_KEY_SECRET }}
+
+jobs:
+  deploy:
+    name: Deploy in AWS
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.ACCESS_KEY_SECRET }}
+          aws-region: ${{ env.REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -f $DOCKERFILE -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -t $ECR_REGISTRY/$ECR_REPOSITORY:${{ inputs.stage }}-latest .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY --all-tags
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Download task definition
+        id: download-task
+        run: |
+          aws ecs describe-task-definition --task-definition $ECS_TASK_DEFINITION_FAMILY --query taskDefinition > task-definition.json
+          echo "revision=$(cat task-definition.json | jq .revision)" >> $GITHUB_OUTPUT
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ inputs.container_name }}
+          image: ${{ steps.build-image.outputs.image }}
+
+      - name: De-register previous revision
+        run: |
+          aws ecs deregister-task-definition \
+            --task-definition $ECS_TASK_DEFINITION_FAMILY:${{ steps.download-task.outputs.revision }}
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ inputs.ecs_service }}
+          cluster: ${{ inputs.ecs_cluster }}
+          force-new-deployment: true
+          wait-for-service-stability: false
