@@ -13,7 +13,7 @@ export default function HomePage() {
   const handleClick = async () => {
     setError(null)
     const result = await greetAction()
-    if (result.success) {
+    if (result.ok) {
       setGreeting(result.data.message)
       setClickCount(result.data.clickCount)
     } else {

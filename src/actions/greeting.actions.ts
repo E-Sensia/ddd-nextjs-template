@@ -2,7 +2,7 @@
 
 import { getGreetingService, getLogger } from "../../main"
 import { type GreetResponse, greetResponseSchema } from "./greeting.dto"
-import type { ActionResult } from "@utils"
+import { type ActionResult, toActionError } from "../mappers/errors.mapper"
 
 export async function greetAction(): Promise<ActionResult<GreetResponse>> {
   try {
@@ -12,12 +12,9 @@ export async function greetAction(): Promise<ActionResult<GreetResponse>> {
       message: result.message,
       clickCount: result.clickCount,
     })
-    return { success: true, data }
+    return { ok: true, data }
   } catch (err) {
-    getLogger().error("greetAction failed", {
-      error: err instanceof Error ? err.message : String(err),
-    })
-    return { success: false, error: "Failed to process greeting" }
+    return toActionError(err, getLogger())
   }
 }
 
