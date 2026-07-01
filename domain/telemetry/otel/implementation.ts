@@ -6,6 +6,7 @@ import {
 } from "@opentelemetry/api"
 import type { MetricsRegistry, MetricAttributes, Tracer } from "../model"
 import type { Counter, Histogram } from "@opentelemetry/api"
+import { asSpanId, asTraceId } from "../../shared/types"
 
 export function createOtelMetricsRegistry(
   serviceName: string,
@@ -58,7 +59,7 @@ export function createOtelTracer(serviceName: string): Tracer {
       if (!span) return null
       const ctx = span.spanContext()
       if (!isSpanContextValid(ctx)) return null
-      return { traceId: ctx.traceId, spanId: ctx.spanId }
+      return { traceId: asTraceId(ctx.traceId), spanId: asSpanId(ctx.spanId) }
     },
   }
 }
