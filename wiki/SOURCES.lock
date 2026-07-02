@@ -1,0 +1,15 @@
+files:
+  coding-principles.md: tech/concepts/coding-principles.md
+  ddd-in-typescript.md: tech/conventions/typescript/ddd-in-typescript.md
+  ddd.md: tech/concepts/ddd.md
+  deep-modules.md: tech/concepts/deep-modules.md
+  dependency-injection.md: tech/patterns/dependency-injection.md
+  error-handling.md: tech/concepts/error-handling.md
+  llm-wiki.md: tech/conventions/shared/llm-wiki.md
+  log-format.md: tech/concepts/log-format.md
+  makefile.md: tech/conventions/shared/makefile.md
+  tdd.md: tech/concepts/tdd.md
+  tracer-bullet.md: tech/concepts/tracer-bullet.md
+kb: E-Sensia/knowledge-base
+sha: ac90b437951f90ab92f84c4463258d618d8f6734
+synced_at: '2026-07-02'
