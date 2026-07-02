@@ -9,6 +9,11 @@ jobs:
   quality:
     runs-on: ubuntu-latest
 
+    env:
+      # TODO: provision a fine-grained PAT (contents:read on E-Sensia/knowledge-base)
+      # so make wiki-check can reach the KB from CI, then remove this skip.
+      SKIP_WIKI_CHECK: "1"
+
     steps:
       - uses: actions/checkout@v4
 
