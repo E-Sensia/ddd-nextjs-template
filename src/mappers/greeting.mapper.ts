@@ -3,7 +3,7 @@ import type { GreetingResult } from "@domain/greeting"
 
 // Mappers own shape validation at the edge: external data enters as
 // `unknown` and is narrowed by a zod v4 schema (schema + inferred type in
-// one place). Invalid shape -> null -> the action answers INVALID_REQUEST
+// one place). Invalid shape -> null -> the action answers invalid_request
 // and no service runs. Zod stays confined to src/mappers and config — the
 // domain never imports a validation library.
 

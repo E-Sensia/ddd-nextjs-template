@@ -25,7 +25,7 @@ export async function triggerErrorAction(
 ): Promise<ActionResult<null>> {
   return withConversationContext(async () => {
     const input = toTriggerErrorInput(raw)
-    if (!input) return { ok: false, error: "INVALID_REQUEST" }
+    if (!input) return { ok: false, error: "invalid_request" }
 
     getLogger().error("test error triggered", { source: input.source })
     return { ok: true, data: null }

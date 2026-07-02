@@ -16,7 +16,7 @@ export type ActionResult<T> =
  *
  *   if (err instanceof OrderNotFoundError) return { ok: false, error: err.code }
  *
- * Anything unknown is logged once (handle-once rule) and becomes "INTERNAL".
+ * Anything unknown is logged once (handle-once rule) and becomes "internal".
  */
 export function toActionError(
   err: unknown,
@@ -25,5 +25,5 @@ export function toActionError(
   logger.error("unexpected error", {
     error: err instanceof Error ? err.message : String(err),
   })
-  return { ok: false, error: "INTERNAL" }
+  return { ok: false, error: "internal" }
 }
