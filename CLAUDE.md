@@ -1,54 +1,57 @@
+<!-- GENERATED — do not grow. This file is the thin entry point; depth lives
+     in the wiki (progressive disclosure). Architecture: wiki/standard/
+     (authoritative). Repo context: wiki/local/. Deviations: docs/adr/. -->
+
 @AGENTS.md
 
-## Architecture
+# ddd-nextjs-template
 
-This project implements the E-Sensia Domain-Driven Architecture standard.
-See the full reference:
-@~/.claude/skills/ddd-refactor/references/architecture-typescript.md
+Next.js template implementing the E-Sensia Domain-Driven Architecture
+standard — `wiki/standard/ddd.md`, applied to this stack by
+`wiki/standard/ddd-in-typescript.md`.
 
-Key layers:
+## Repo map
 
-- `domain/` — ports (interfaces), pure functions, branded ids
-  (`domain/shared`), one stub per port. No framework deps.
-- `services/` — orchestration classes: exported `XxxServiceDeps` type +
-  constructor assigning `private readonly` fields; `inject.ts` factory
-  (`createXxxService(deps, ...options)`); `with...` options only for
-  genuine tunables. Three test files per service (happy/error/stress).
-- `src/` — Next.js delivery layer. `src/mappers/` validate shape with zod
-  (`safeParse` -> typed input or `null`) and own the single
-  error -> `ActionResult` translation (`toActionError`); `src/server/`
-  holds the request-context (X-Conversation-Id + request_id via
-  AsyncLocalStorage) and request-metrics wrappers.
-- `main.ts` — composition root; wires all dependencies and exposes
-  `getGreetingService`/`getLogger`/`getMetrics`/`getTracer`.
-- `config/` — Zod-validated environment config; only `main.ts` imports it.
-- `otel/` + `instrumentation.ts` — OpenTelemetry SDK bootstrap.
+- `main.ts` — composition root; the only place that wires concrete implementations
+- `config/` — Zod-validated env config; only `main.ts` imports it
+- `domain/` — pure business logic: objects, ports, implementations, stubs
+- `services/` — orchestration classes: typed `Deps` + constructor, `inject.ts` factory
+- `src/` — Next.js delivery layer (the server layer): app, actions, mappers, request context
+- `utils/` — generic helpers (injection, async-context); depends on nothing
+- `otel/` + `instrumentation.ts` — OpenTelemetry bootstrap
+- `wiki/` — `standard/` (mirrored KB notes, read-only) + `local/` (repo-specific knowledge)
+- `docs/adr/` — architecture decision records (deviations from the standard)
 
-Dependency flow (CI-enforced by dependency-cruiser): `main → config,
-domain/*, services/*` | `src/ → services (via main), domain objects,
-utils` | `services → domain, utils` | `utils → nothing` | No upward
-arrows; `src/` never imports domain adapters or stubs.
-
-## Rules
-
-- Server actions return `ActionResult<T> = { ok: true; data } |
-{ ok: false; error }` with stable error codes — they never throw across
-  the wire.
-- Action bodies run inside `withConversationContext` (route handlers inside
-  `withRequestContext`) so every log line carries conversation_id +
-  request_id.
-- Log messages are stable lowercase constants ("button clicked"); data goes
-  in flat extra fields, never interpolated. No PII/medical data/secrets in
-  logs.
-- Identifiers are branded types (`ConversationId`, not `string`); untrusted
-  input goes through smart constructors returning `null`.
-- Tests assemble services through the factory with stubs — the exact
-  production path. Assert on outcomes, never on stub call counts.
-
-## Workflow
+## Commands
 
 - `make setup` — from zero to working (deps, git hooks, .env)
-- `make ci` — format-check + lint (eslint + tsc + depcruise) + unit tests;
-  run it before declaring any change done
+- `make ci` — format-check + lint + unit tests + wiki-check; run it before declaring any change done
 - `make test-e2e` — Playwright (requires `make build` once)
+- `make wiki-sync` — re-mirror the KB notes into `wiki/standard/` (requires `uv`; set `KB_PATH` to a local KB clone)
+- `make wiki-check` — fail if `wiki/standard/` drifted from the locked KB SHA
 - GitHub workflows call only `make` targets.
+
+## The rules at a glance (from wiki/standard/ddd.md)
+
+1. Business logic lives in `domain`, orchestration in `services`, `server` stays thin.
+2. Dependencies point downward only — no upward import, ever.
+3. Every port has at least one implementation and one stub; ports expose capabilities, not tables.
+4. Services receive a typed `Deps` object at construction; a missing dependency is a compile/lint error, never a runtime surprise.
+5. Only `main` imports the config; everything else receives primitives.
+6. Mappers validate shape, the domain enforces invariants, illegal states are unrepresentable.
+7. Expected errors are typed and part of the interface; the server maps them once; nothing internal leaks.
+8. Logs, metrics and traces are injected ports; correlation ids travel explicitly.
+9. One port call is the atomicity unit; writes are idempotent.
+10. Three test files per service (`happy`/`error`/`stress`); assert outcomes, never calls.
+11. Everything machine-checkable is CI-enforced; deviations are ADRs.
+12. Every repo ships `CONTEXT.md`, health endpoints, graceful shutdown and versioned migrations.
+
+## Where knowledge lives
+
+- `wiki/standard/` — the architecture standard, mirrored verbatim from
+  E-Sensia/knowledge-base at the SHA pinned in `wiki/SOURCES.lock`.
+  **Authoritative**: consult it before any architecture-shaped decision.
+  Never edit these files — change the KB, then `make wiki-sync`.
+- `wiki/local/` — repo-specific knowledge, maintained as work happens
+  (one topic per note; cite `wiki/standard/` and the code).
+- `docs/adr/` — deviations from the standard are recorded as ADRs.

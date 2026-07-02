@@ -25,6 +25,9 @@ infrastructure.
   Prometheus
 - **Code quality** — ESLint, Prettier, TypeScript strict +
   erasableSyntaxOnly + verbatimModuleSyntax, SonarQube config, git hooks
+- **LLM wiki** — `wiki/standard/` mirrors the architecture standard from
+  E-Sensia/knowledge-base at a pinned SHA (`make wiki-sync`; drift fails CI
+  via `make wiki-check`); `wiki/local/` compounds repo-specific knowledge
 
 ## Quick start
 
@@ -47,6 +50,11 @@ Open http://localhost:3000 — the greeting example demonstrates the full
 architecture.
 
 ## Architecture
+
+The standard this repo carries lives in `wiki/standard/` (mirrored verbatim
+from the knowledge base, pinned in `wiki/SOURCES.lock`) — that is the
+authoritative reference; `CLAUDE.md` is the thin entry point. Below, the
+template layout in one look:
 
 ```
 main.ts              # composition root — wires all dependencies, exposes
@@ -153,20 +161,12 @@ Then wire it in `main.ts` and expose via server actions.
 
 ```bash
 make setup        # install deps, git hooks, .env — from zero to working
-make ci           # format-check + lint + unit tests (exactly what CI runs)
-make format       # prettier --write
-make lint         # eslint + tsc --noEmit + depcruise (never mutates)
-make test         # unit + e2e
-make test-unit    # vitest with coverage
-make test-e2e     # playwright
-make build        # production build
-make run          # prod-like local run
-make run-dev      # dev server with reload
-make clean        # remove build artifacts and caches
+make ci           # exactly what CI runs (format-check + lint + tests + wiki-check)
 ```
 
-GitHub workflows call only these targets — what CI runs and what you run
-locally is the same command.
+The full target list lives in `CLAUDE.md` (and `make help`-style comments in
+the Makefile) — no duplication here. GitHub workflows call only `make`
+targets — what CI runs and what you run locally is the same command.
 
 ## Docker
 
