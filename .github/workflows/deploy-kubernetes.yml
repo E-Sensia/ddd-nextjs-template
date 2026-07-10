@@ -1,0 +1,35 @@
+name: Deploy to Kubernetes
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      namespace:
+        required: true
+        type: string
+      deployment:
+        required: true
+        type: string
+      image:
+        required: true
+        type: string
+
+env:
+  KUBERNETES_URL: ${{ (inputs.environment == 'prod') && vars.KUBERNETES_PROD_URL || vars.KUBERNETES_TEST_URL }}
+  KUBERNETES_SECRET: ${{ (inputs.environment == 'prod') && secrets.KUBERNETES_PROD_SECRET || secrets.KUBERNETES_TEST_SECRET }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set the Kubernetes context
+        uses: azure/k8s-set-context@v4
+        with:
+          method: service-account
+          k8s-url: ${{ env.KUBERNETES_URL }}
+          k8s-secret: ${{ env.KUBERNETES_SECRET }}
+
+      - name: Update the deployment image
+        run: kubectl set image deployment/${{ inputs.deployment }} ${{ inputs.deployment }}=${{ inputs.image }} -n ${{ inputs.namespace }}

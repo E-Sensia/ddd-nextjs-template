@@ -1,10 +1,18 @@
 import { Config } from "@config/config"
-import { createConsoleLogger } from "@domain/logging"
-import { createOtelMetricsRegistry, createOtelTracer } from "@domain/telemetry"
+import { createConsoleLogger, type Logger } from "@domain/logging"
+import {
+  createOtelMetricsRegistry,
+  createOtelTracer,
+  type MetricsRegistry,
+  type Tracer,
+} from "@domain/telemetry"
 import { createInMemoryClickRepository } from "@domain/greeting"
-import { GreetingService } from "@services/greeting"
+import { createGreetingService, type GreetingService } from "@services/greeting"
 
 let greetingService: GreetingService
+let metricsRegistry: MetricsRegistry
+let tracerInstance: Tracer
+let loggerInstance: Logger
 
 export function getGreetingService(): GreetingService {
   if (!greetingService) {
@@ -13,21 +21,48 @@ export function getGreetingService(): GreetingService {
   return greetingService
 }
 
+export function getMetrics(): MetricsRegistry {
+  if (!metricsRegistry) {
+    bootstrap()
+  }
+  return metricsRegistry
+}
+
+export function getTracer(): Tracer {
+  if (!tracerInstance) {
+    bootstrap()
+  }
+  return tracerInstance
+}
+
+export function getLogger(): Logger {
+  if (!loggerInstance) {
+    bootstrap()
+  }
+  return loggerInstance
+}
+
 function bootstrap() {
   const cfg = new Config()
 
-  const metrics = createOtelMetricsRegistry(
+  metricsRegistry = createOtelMetricsRegistry(
     cfg.otelServiceName,
     cfg.otelServiceVersion,
   )
-  const tracer = createOtelTracer(cfg.otelServiceName)
-  const logger = createConsoleLogger({ metrics, tracer })
+  tracerInstance = createOtelTracer(cfg.otelServiceName)
+  loggerInstance = createConsoleLogger({
+    service: cfg.otelServiceName,
+    version: cfg.otelServiceVersion,
+    format: cfg.logFormat,
+    metrics: metricsRegistry,
+    tracer: tracerInstance,
+  })
   const repository = createInMemoryClickRepository()
 
-  greetingService = new GreetingService({
-    logger,
-    metrics,
-    tracer,
+  greetingService = createGreetingService({
+    logger: loggerInstance,
+    metrics: metricsRegistry,
+    tracer: tracerInstance,
     repository,
   })
 }

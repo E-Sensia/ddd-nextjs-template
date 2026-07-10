@@ -1,3 +1,5 @@
+import type { SpanId, TraceId } from "../shared/types"
+
 // --- Objects ---
 
 export type MetricAttributes = Record<string, string | number | boolean>
@@ -14,8 +16,8 @@ export type MetricsRegistry = {
 }
 
 export type TraceContext = {
-  traceId: string
-  spanId: string
+  traceId: TraceId
+  spanId: SpanId
 }
 
 export type Tracer = {

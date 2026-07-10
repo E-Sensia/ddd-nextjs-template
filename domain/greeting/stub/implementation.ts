@@ -1,4 +1,4 @@
-import { ClickRepository } from "../model"
+import type { ClickRepository } from "../model"
 
 export function createClickRepositoryStub(
   initialCount = 0,

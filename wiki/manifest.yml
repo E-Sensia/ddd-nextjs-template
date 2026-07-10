@@ -1,0 +1,6 @@
+kb: E-Sensia/knowledge-base
+select:
+  - where: { domain: tech, status: stable }
+exclude:
+  - where: { tags_any: [golang, python, fastapi] }
+  - where: { type: moc }

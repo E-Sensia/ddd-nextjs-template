@@ -1,4 +1,5 @@
-import { GreetingService } from "@services/greeting"
+import { describe, expect, it } from "vitest"
+import { createGreetingService } from "@services/greeting"
 import { createLoggerStub } from "@domain/logging"
 import { createMetricsRegistryStub, createTracerStub } from "@domain/telemetry"
 import { createClickRepositoryStub } from "@domain/greeting"
@@ -9,7 +10,7 @@ describe("GreetingService — happy paths", () => {
     const metrics = createMetricsRegistryStub()
     const tracer = createTracerStub()
     const repository = createClickRepositoryStub()
-    const svc = new GreetingService({ logger, metrics, tracer, repository })
+    const svc = createGreetingService({ logger, metrics, tracer, repository })
     return { svc, logger, metrics, tracer, repository }
   }
 
@@ -37,7 +38,7 @@ describe("GreetingService — happy paths", () => {
     await svc.greet()
 
     expect(logger.entries).toHaveLength(1)
-    expect(logger.entries[0].message).toBe("Button clicked")
+    expect(logger.entries[0].message).toBe("button clicked")
     expect(logger.entries[0].context).toEqual({ clickCount: 1 })
   })
 

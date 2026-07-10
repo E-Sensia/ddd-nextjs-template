@@ -1,3 +1,6 @@
 node_modules
 .next
 pnpm-lock.yaml
+# verbatim KB mirror — read-only, wiki-check enforces byte fidelity
+wiki/standard
+wiki/SOURCES.lock

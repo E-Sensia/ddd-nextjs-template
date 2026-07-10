@@ -1,11 +1,10 @@
-import { metrics } from "@opentelemetry/api"
+import { getMetrics } from "../../../../main"
+import { withRequestContext } from "../../../server/request-context"
+import { withRequestMetrics } from "../../../server/request-metrics"
 
-const meter = metrics.getMeter("hello-world-nextjs")
-const counter = meter.createCounter("health.calls", {
-  description: "Number of health check calls",
-})
-
-export async function GET() {
-  counter.add(1)
-  return Response.json({ status: "UP" })
-}
+export const GET = withRequestContext(
+  withRequestMetrics(() => {
+    getMetrics().incrementCounter("health.calls")
+    return Response.json({ status: "UP" })
+  }),
+)

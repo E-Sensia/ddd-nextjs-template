@@ -9,6 +9,11 @@ jobs:
   quality:
     runs-on: ubuntu-latest
 
+    env:
+      # TODO: provision a fine-grained PAT (contents:read on E-Sensia/knowledge-base)
+      # so make wiki-check can reach the KB from CI, then remove this skip.
+      SKIP_WIKI_CHECK: "1"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -21,16 +26,12 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - run: pnpm i
+      - run: make setup
 
-      - run: pnpm lint
+      - run: make ci
 
-      - run: pnpm tsc
-
-      - run: pnpm test
-
-      - run: pnpm build
+      - run: make build
 
       - run: pnpm exec playwright install --with-deps chromium
 
-      - run: pnpm test:e2e
+      - run: make test-e2e

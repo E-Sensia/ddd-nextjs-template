@@ -1,4 +1,4 @@
-import { Logger, LogEntry, createLogEntry } from "../model"
+import { type Logger, type LogEntry, createLogEntry } from "../model"
 
 export function createLoggerStub(): Logger & { entries: LogEntry[] } {
   const entries: LogEntry[] = []
@@ -11,10 +11,9 @@ export function createLoggerStub(): Logger & { entries: LogEntry[] } {
 
   return {
     entries,
-    log: log("log"),
+    debug: log("debug"),
     info: log("info"),
     warn: log("warn"),
     error: log("error"),
-    debug: log("debug"),
   }
 }

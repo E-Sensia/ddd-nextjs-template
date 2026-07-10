@@ -1,8 +1,12 @@
-import { Logger } from "@domain/logging"
-import { MetricsRegistry, Tracer } from "@domain/telemetry"
-import { ClickRepository, createGreetingResult, GreetingResult } from "@domain/greeting"
+import type { Logger } from "@domain/logging"
+import type { MetricsRegistry, Tracer } from "@domain/telemetry"
+import {
+  type ClickRepository,
+  createGreetingResult,
+  type GreetingResult,
+} from "@domain/greeting"
 
-type GreetingServiceDeps = {
+export type GreetingServiceDeps = {
   logger: Logger
   metrics: MetricsRegistry
   tracer: Tracer
@@ -10,7 +14,7 @@ type GreetingServiceDeps = {
 }
 
 export class GreetingService {
-  readonly logger: Logger
+  private readonly logger: Logger
   private readonly metrics: MetricsRegistry
   private readonly tracer: Tracer
   private readonly repository: ClickRepository
@@ -26,7 +30,7 @@ export class GreetingService {
     return this.tracer.span("GreetingService.greet", async () => {
       const clickCount = await this.repository.increment()
 
-      this.logger.info("Button clicked", { clickCount })
+      this.logger.info("button clicked", { clickCount })
       this.metrics.incrementCounter("greeting.button_clicks", {
         action: "greet",
       })

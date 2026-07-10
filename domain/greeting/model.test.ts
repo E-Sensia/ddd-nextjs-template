@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest"
 import { formatGreeting, createGreetingResult } from "./model"
 
 describe("formatGreeting", () => {
