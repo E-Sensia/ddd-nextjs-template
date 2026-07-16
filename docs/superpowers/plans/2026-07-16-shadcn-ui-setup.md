@@ -23,9 +23,11 @@
 ### Task 1: KB standard update (shadcn/ui adoption)
 
 **Files:**
+
 - Modify: `~/Documents/esensia_knowledge_base/tech/conventions/typescript/ddd-in-typescript.md` (frontmatter, stack table l. 31-32, layout tree l. 93, UI paragraph l. 411, source trailer l. 481)
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: a pushed commit on `docs/tech-ddd` whose SHA Task 5 pins into `wiki/SOURCES.lock` via `make wiki-sync`.
 
@@ -41,35 +43,45 @@ In `tech/conventions/typescript/ddd-in-typescript.md`, exact replacements:
 1. Frontmatter — `updated: 2026-07-02` → `updated: 2026-07-16`
 
 2. Stack table:
+
 ```
 | Frontend only | React + Tailwind CSS + custom component library |
 | Frontend + backend | Next.js (App Router) + Tailwind CSS + custom component library |
 ```
+
 →
+
 ```
 | Frontend only | React + Tailwind CSS + shadcn/ui + custom components |
 | Frontend + backend | Next.js (App Router) + Tailwind CSS + shadcn/ui + custom components |
 ```
 
 3. Layout tree:
+
 ```
     ├── components/                   # custom React component library
 ```
+
 →
+
 ```
     ├── components/                   # ui/ (shadcn/ui) + custom components
 ```
 
 4. UI paragraph:
+
 ```
 UI comes from the custom component library in `server/components/` (Tailwind, one folder per component with its test) — see [[component-structure]].
 ```
+
 →
+
 ```
 Classic UI components (button, input, dialog, …) come from [shadcn/ui](https://ui.shadcn.com), added per project via `make ui-add` and generated into `server/components/ui/`. Domain-specific components remain hand-written in `server/components/<name>/` (Tailwind, one folder per component with its test) — see [[component-structure]].
 ```
 
 5. Source trailer (last line, before the final period of the italic block): append ` ; shadcn/ui adopted for classic UI components 2026-07-16` so the line ends:
+
 ```
 … injection unified on `Deps` + options 2026-07-02 ; shadcn/ui adopted for classic UI components 2026-07-16.*
 ```
@@ -87,6 +99,7 @@ git add tech/conventions/typescript/ddd-in-typescript.md
 git commit -m "docs(ts-ddd): adopt shadcn/ui for classic UI components"
 git push origin docs/tech-ddd
 ```
+
 Expected: push accepted. Record the new SHA (`git rev-parse HEAD`) — Task 5 must pin it.
 
 ---
@@ -94,24 +107,29 @@ Expected: push accepted. Record the new SHA (`git rev-parse HEAD`) — Task 5 mu
 ### Task 2: shadcn init in the template (minimal, zero components)
 
 **Files:**
+
 - Create: `components.json`, `src/lib/utils.ts`
 - Modify: `src/app/globals.css`, `package.json`, `pnpm-lock.yaml`
 
 **Interfaces:**
+
 - Consumes: existing `@/*` → `./src/*` alias in `tsconfig.json`.
 - Produces: `cn(...inputs: ClassValue[]): string` exported from `src/lib/utils.ts` (alias `@/lib/utils`); `components.json` consumed by `make ui-add` (Task 3).
 
 - [ ] **Step 1: Run shadcn init non-interactively**
 
 Run from the template root:
+
 ```bash
 pnpm dlx shadcn@latest init -y -d
 ```
+
 Expected: creates `components.json` + `src/lib/utils.ts`, adds deps (at least `clsx`, `tailwind-merge`), rewrites `src/app/globals.css` with the shadcn theme block (`:root`/`.dark` oklch variables, `@theme inline`).
 
 **Fallback if the CLI fails or generates Tailwind-3-style output** (`tailwind.config.*`, `@tailwind base` directives): revert (`git checkout -- . && git clean -fd src/lib components.json && pnpm install`), then create by hand:
 
 `components.json`:
+
 ```json
 {
   "$schema": "https://ui.shadcn.com/schema.json",
@@ -137,6 +155,7 @@ Expected: creates `components.json` + `src/lib/utils.ts`, adds deps (at least `c
 ```
 
 `src/lib/utils.ts`:
+
 ```typescript
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
@@ -153,12 +172,15 @@ Deps: `pnpm add clsx tailwind-merge`
 - [ ] **Step 2: Reconcile globals.css with the pre-existing repo rules**
 
 The old file defined its own `--background`/`--foreground` in `:root` + `@media (prefers-color-scheme: dark)` and a `body { font-family: Arial … }` rule. After init, keep **shadcn's** variables and:
+
 - delete the old duplicate `:root` / `@media (prefers-color-scheme: dark)` blocks if init left them behind;
 - ensure the font mappings survive inside shadcn's `@theme inline`:
+
 ```css
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+--font-sans: var(--font-geist-sans);
+--font-mono: var(--font-geist-mono);
 ```
+
 - ensure a body font rule remains (shadcn's `@layer base` `body` rule replaces the old Arial one — acceptable; do not re-add Arial).
 
 - [ ] **Step 3: Verify types and formatting**
@@ -183,26 +205,31 @@ git commit -m "feat: initialize shadcn/ui (no components) — cn(), theme vars, 
 ### Task 3: `make ui-add` target
 
 **Files:**
+
 - Modify: `Makefile` (`.PHONY` line 4; new target after `build:` in the Development section)
 
 **Interfaces:**
+
 - Consumes: `components.json` (Task 2).
 - Produces: `make ui-add c="<names>"` — the documented entry point referenced by the KB (Task 1), `CLAUDE.md` and `wiki/local/shadcn.md` (Task 4).
 
 - [ ] **Step 1: Add the target**
 
 In `.PHONY` (line 4), append `ui-add`:
+
 ```makefile
 .PHONY: setup format format-check lint tsc depcruise sonar check test test-unit test-e2e ci build run run-dev dev clean wiki-sync wiki-check _wiki-run ui-add
 ```
 
 After the `build:` block in `# ---------- Development ----------`:
+
 ```makefile
 ## Add shadcn/ui components into src/components/ui (usage: make ui-add c="button dialog")
 ui-add:
 	@test -n "$(c)" || { echo 'usage: make ui-add c="button dialog"'; exit 1; }
 	pnpm dlx shadcn@latest add $(c)
 ```
+
 (Recipe lines are TAB-indented.)
 
 - [ ] **Step 2: Verify the usage guard**
@@ -220,6 +247,7 @@ rm -rf src/components/ui
 pnpm install
 git status -s   # must show only the Makefile change
 ```
+
 Expected: `OK`, then a clean tree except `Makefile`.
 
 - [ ] **Step 4: Commit**
@@ -234,10 +262,12 @@ git commit -m "feat: add ui-add make target for shadcn components"
 ### Task 4: Documentation (CLAUDE.md + wiki/local)
 
 **Files:**
+
 - Modify: `CLAUDE.md` (repo-map `src/` line), `wiki/local/index.md` (Articles list)
 - Create: `wiki/local/shadcn.md`
 
 **Interfaces:**
+
 - Consumes: `make ui-add` (Task 3), KB wording (Task 1).
 - Produces: repo-local documentation; nothing downstream.
 
@@ -246,7 +276,9 @@ git commit -m "feat: add ui-add make target for shadcn components"
 ```
 - `src/` — Next.js delivery layer (the server layer): app, actions, mappers, request context
 ```
+
 →
+
 ```
 - `src/` — Next.js delivery layer (the server layer): app, actions, mappers, request context; classic UI = shadcn/ui in `src/components/ui/` (`make ui-add`), custom components alongside
 ```
@@ -281,6 +313,7 @@ Gotchas:
 - [ ] **Step 3: Register the note in `wiki/local/index.md`**
 
 Replace `_None yet._` with:
+
 ```markdown
 - [shadcn/ui — classic UI components](shadcn.md)
 ```
@@ -297,9 +330,11 @@ git commit -m "docs: document shadcn/ui convention (CLAUDE.md + wiki/local)"
 ### Task 5: Re-mirror wiki/standard at the new KB SHA
 
 **Files:**
+
 - Modify (generated): `wiki/standard/*.md`, `wiki/SOURCES.lock`
 
 **Interfaces:**
+
 - Consumes: the KB SHA pushed in Task 1.
 - Produces: `wiki/standard/ddd-in-typescript.md` containing the shadcn wording; `SOURCES.lock` pinned to the Task 1 SHA.
 
@@ -314,6 +349,7 @@ Expected: exits 0; `wiki/SOURCES.lock` `sha:` equals the Task 1 SHA, `synced_at:
 grep -n "shadcn" wiki/standard/ddd-in-typescript.md
 make wiki-check
 ```
+
 Expected: grep hits (stack table + UI paragraph); wiki-check exits 0. Note: the diff may also include the KB's `llm-wiki.md` change from `2e33764` — expected, commit it too.
 
 - [ ] **Step 3: Commit**
@@ -330,6 +366,7 @@ git commit -m "docs: re-sync wiki/standard at KB shadcn adoption SHA"
 **Files:** none (verification only).
 
 **Interfaces:**
+
 - Consumes: all previous tasks.
 - Produces: a green branch ready for PR/merge.
 
@@ -347,6 +384,7 @@ Expected: only `button` (no `ui/` directory).
 
 ```bash
 git add docs/superpowers/plans/2026-07-16-shadcn-ui-setup.md
-git commit -m "docs: check off shadcn setup plan" 
+git commit -m "docs: check off shadcn setup plan"
 ```
+
 (Skip if the plan file was not modified.)

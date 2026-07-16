@@ -26,7 +26,7 @@ so the standard and the template stay aligned (no ADR needed).
 Edit `tech/conventions/typescript/ddd-in-typescript.md`:
 
 - **Stack table** (frontend rows): `React + Tailwind CSS + custom component
-  library` → `React + Tailwind CSS + shadcn/ui + custom components`.
+library` → `React + Tailwind CSS + shadcn/ui + custom components`.
 - **Layout tree** (`components/` line): note that shadcn primitives live in
   `components/ui/`, custom components in `components/<name>/`.
 - **UI paragraph** (§ server layer): classic UI components come from shadcn/ui,
