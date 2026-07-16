@@ -9,7 +9,7 @@ created: 2026-07-01
 updated: 2026-07-02
 aliases: [Deps struct, FOP, Functional Options Pattern, functional-options-injection]
 kb_source: tech/patterns/dependency-injection.md
-kb_sha: ac90b437951f90ab92f84c4463258d618d8f6734
+kb_sha: 40cd8fcc1429bcdfcf4100af4330391e872a2c9c
 ---
 
 # Dependency Injection — Deps & Options

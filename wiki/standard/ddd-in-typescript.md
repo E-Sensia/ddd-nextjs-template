@@ -6,10 +6,10 @@ lang: en
 tags: [typescript, nextjs, ddd]
 status: stable
 created: 2026-07-01
-updated: 2026-07-02
+updated: 2026-07-16
 aliases: [TS DDD]
 kb_source: tech/conventions/typescript/ddd-in-typescript.md
-kb_sha: ac90b437951f90ab92f84c4463258d618d8f6734
+kb_sha: 40cd8fcc1429bcdfcf4100af4330391e872a2c9c
 ---
 
 # DDD in TypeScript
@@ -30,8 +30,8 @@ Every TypeScript repo implements the constitution [[ddd]] with the structure and
 | Linting / formatting | ESLint + Prettier |
 | Testing | Vitest 4 (new repos; Jest tolerated on existing) |
 | Shape validation (edge only) | Zod v4 (Standard Schema — swappable for Valibot if bundle-critical) |
-| Frontend only | React + Tailwind CSS + custom component library |
-| Frontend + backend | Next.js (App Router) + Tailwind CSS + custom component library |
+| Frontend only | React + Tailwind CSS + shadcn/ui + custom components |
+| Frontend + backend | Next.js (App Router) + Tailwind CSS + shadcn/ui + custom components |
 | Front/back communication | Next.js Server Actions (`"use server"`) |
 | Dependency injection | Typed `Deps` object + constructor ([[dependency-injection|options]] for tunables only) |
 
@@ -92,7 +92,7 @@ project/
 │       └── service.stress.test.ts
 └── server/                           # THIS IS the Next.js app
     ├── app/                          # App Router (layout.tsx, page.tsx, ...)
-    ├── components/                   # custom React component library
+    ├── components/                   # ui/ (shadcn/ui) + custom components
     ├── actions/                      # server actions ("use server")
     ├── mappers/                      # DTO <-> domain + error mapping
     ├── next.config.js
@@ -410,7 +410,7 @@ export async function placeOrderAction(raw: unknown): Promise<ActionResult<Place
 }
 ```
 
-UI comes from the custom component library in `server/components/` (Tailwind, one folder per component with its test) — see [[component-structure]].
+Classic UI components (button, input, dialog, …) come from [shadcn/ui](https://ui.shadcn.com), added per project via `make ui-add` and generated into `server/components/ui/`. Domain-specific components remain hand-written in `server/components/<name>/` (Tailwind, one folder per component with its test) — see [[component-structure]].
 
 ### Config and main
 
@@ -480,4 +480,4 @@ Applies [[ddd]] to TypeScript with the language's cheapest tools: `type` + facto
 - [[deep-modules]] — how to shape ports
 - [[component-structure]] — React component library conventions
 
-*Source (original annotated listings): [TS DDD](../../../docs/sources/ddd/ts-ddd.md) ; refreshed 2026-07-01 — ecosystem review (Vitest 4, Zod v4, TS 6/7 Go-native, React Compiler, tsconfig hardening) ; injection unified on `Deps` + options 2026-07-02.*
+*Source (original annotated listings): [TS DDD](../../../docs/sources/ddd/ts-ddd.md) ; refreshed 2026-07-01 — ecosystem review (Vitest 4, Zod v4, TS 6/7 Go-native, React Compiler, tsconfig hardening) ; injection unified on `Deps` + options 2026-07-02 ; shadcn/ui adopted for classic UI components 2026-07-16.*

@@ -1,7 +1,7 @@
 # Canonical Makefile — the single interface for humans, CI and agents.
 # GitHub workflows only ever call make targets, so CI and local runs
 # cannot drift. Full local pipeline: make ci
-.PHONY: setup format format-check lint tsc depcruise sonar check test test-unit test-e2e ci build run run-dev dev clean wiki-sync wiki-check _wiki-run
+.PHONY: setup format format-check lint tsc depcruise sonar check test test-unit test-e2e ci build run run-dev dev clean wiki-sync wiki-check _wiki-run ui-add
 
 # ---------- Setup ----------
 
@@ -31,6 +31,11 @@ run:
 ## Produce the deployable artifact
 build:
 	pnpm build
+
+## Add shadcn/ui components into src/components/ui (usage: make ui-add c="button dialog")
+ui-add:
+	@test -n "$(c)" || { echo 'usage: make ui-add c="button dialog"'; exit 1; }
+	pnpm dlx shadcn@latest add $(c)
 
 # ---------- Formatting ----------
 

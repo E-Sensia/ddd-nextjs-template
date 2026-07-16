@@ -9,7 +9,7 @@ created: 2026-07-01
 updated: 2026-07-01
 aliases: [tracer bullets, walking skeleton]
 kb_source: tech/concepts/tracer-bullet.md
-kb_sha: ac90b437951f90ab92f84c4463258d618d8f6734
+kb_sha: 40cd8fcc1429bcdfcf4100af4330391e872a2c9c
 ---
 
 # Tracer Bullet

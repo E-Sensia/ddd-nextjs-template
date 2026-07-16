@@ -9,7 +9,7 @@ created: 2026-07-02
 updated: 2026-07-02
 aliases: [repo wiki, wiki-sync]
 kb_source: tech/conventions/shared/llm-wiki.md
-kb_sha: ac90b437951f90ab92f84c4463258d618d8f6734
+kb_sha: 40cd8fcc1429bcdfcf4100af4330391e872a2c9c
 ---
 
 # LLM Wiki per Service
@@ -30,7 +30,7 @@ repo/
 
 ## The two tiers
 
-**`wiki/standard/` — deterministic mirror.** Selected KB notes copied **verbatim** (wikilinks rewritten relative, source path + KB SHA stamped in frontmatter). No LLM rewriting: for a standard, a copy beats a paraphrase — fidelity is the point. Nobody edits these files by hand; `make wiki-check` fails CI if they drift from what the pinned SHA derives.
+**`wiki/standard/` — deterministic mirror.** Selected KB notes copied **verbatim** (the mirror is flat, so `[[wikilinks]]` between mirrored notes resolve as-is; source path + KB SHA are stamped in the frontmatter). Formatters must exempt the mirror (e.g. `.prettierignore`) — byte fidelity is the contract. No LLM rewriting: for a standard, a copy beats a paraphrase — fidelity is the point. Nobody edits these files by hand; `make wiki-check` fails CI if they drift from what the pinned SHA derives.
 
 **`wiki/local/` — the living layer.** Maintained by agents (and humans) as work happens: module maps, digested ADRs, gotchas, archived answers to recurring questions. It **cites** `standard/` and the code, never restates them. This layer compounds — it is the repo's memory.
 
