@@ -16,7 +16,7 @@ standard — `wiki/standard/ddd.md`, applied to this stack by
 - `config/` — Zod-validated env config; only `main.ts` imports it
 - `domain/` — pure business logic: objects, ports, implementations, stubs
 - `services/` — orchestration classes: typed `Deps` + constructor, `inject.ts` factory
-- `src/` — Next.js delivery layer (the server layer): app, actions, mappers, request context
+- `src/` — Next.js delivery layer (the server layer): app, actions, mappers, request context; classic UI = shadcn/ui in `src/components/ui/` (`make ui-add`), custom components alongside
 - `utils/` — generic helpers (injection, async-context); depends on nothing
 - `otel/` + `instrumentation.ts` — OpenTelemetry bootstrap
 - `wiki/` — `standard/` (mirrored KB notes, read-only) + `local/` (repo-specific knowledge)
