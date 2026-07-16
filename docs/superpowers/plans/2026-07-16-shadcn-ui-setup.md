@@ -31,12 +31,12 @@
 - Consumes: nothing.
 - Produces: a pushed commit on `docs/tech-ddd` whose SHA Task 5 pins into `wiki/SOURCES.lock` via `make wiki-sync`.
 
-- [ ] **Step 1: Verify clean state on the right branch**
+- [x] **Step 1: Verify clean state on the right branch**
 
 Run: `cd ~/Documents/esensia_knowledge_base && git status -sb`
 Expected: `## docs/tech-ddd...origin/docs/tech-ddd` and no modified files.
 
-- [ ] **Step 2: Apply the five edits**
+- [x] **Step 2: Apply the five edits**
 
 In `tech/conventions/typescript/ddd-in-typescript.md`, exact replacements:
 
@@ -86,12 +86,12 @@ Classic UI components (button, input, dialog, …) come from [shadcn/ui](https:/
 … injection unified on `Deps` + options 2026-07-02 ; shadcn/ui adopted for classic UI components 2026-07-16.*
 ```
 
-- [ ] **Step 3: Verify the diff is exactly these lines**
+- [x] **Step 3: Verify the diff is exactly these lines**
 
 Run: `cd ~/Documents/esensia_knowledge_base && git diff --stat && git diff`
 Expected: 1 file changed; hunks only at the five locations above.
 
-- [ ] **Step 4: Commit and push**
+- [x] **Step 4: Commit and push**
 
 ```bash
 cd ~/Documents/esensia_knowledge_base
@@ -116,7 +116,7 @@ Expected: push accepted. Record the new SHA (`git rev-parse HEAD`) — Task 5 mu
 - Consumes: existing `@/*` → `./src/*` alias in `tsconfig.json`.
 - Produces: `cn(...inputs: ClassValue[]): string` exported from `src/lib/utils.ts` (alias `@/lib/utils`); `components.json` consumed by `make ui-add` (Task 3).
 
-- [ ] **Step 1: Run shadcn init non-interactively**
+- [x] **Step 1: Run shadcn init non-interactively**
 
 Run from the template root:
 
@@ -169,7 +169,7 @@ Deps: `pnpm add clsx tailwind-merge`
 
 `src/app/globals.css` — replace the whole file with the canonical shadcn Tailwind-4 neutral block, then re-apply the repo's font/body rules as shown in Step 2 (the canonical block is what `init` writes: `@import "tailwindcss";`, `@custom-variant dark (&:is(.dark *));`, `:root { --radius: 0.625rem; --background: oklch(1 0 0); --foreground: oklch(0.145 0 0); … }`, `.dark { … }`, `@theme inline { --color-background: var(--background); … }`, `@layer base { * { @apply border-border outline-ring/50; } body { @apply bg-background text-foreground; } }` — copy it from https://ui.shadcn.com/docs/installation/manual if needed).
 
-- [ ] **Step 2: Reconcile globals.css with the pre-existing repo rules**
+- [x] **Step 2: Reconcile globals.css with the pre-existing repo rules**
 
 The old file defined its own `--background`/`--foreground` in `:root` + `@media (prefers-color-scheme: dark)` and a `body { font-family: Arial … }` rule. After init, keep **shadcn's** variables and:
 
@@ -183,17 +183,17 @@ The old file defined its own `--background`/`--foreground` in `:root` + `@media 
 
 - ensure a body font rule remains (shadcn's `@layer base` `body` rule replaces the old Arial one — acceptable; do not re-add Arial).
 
-- [ ] **Step 3: Verify types and formatting**
+- [x] **Step 3: Verify types and formatting**
 
 Run: `pnpm tsc && pnpm format && pnpm lint`
 Expected: all pass (format mutates `globals.css`/`components.json` into repo style — that is fine).
 
-- [ ] **Step 4: Visual sanity check**
+- [x] **Step 4: Visual sanity check**
 
 Run: `pnpm dev` (background), open http://localhost:3000.
 Expected: home page renders, existing Button still styled. Stop the server.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add components.json src/lib/utils.ts src/app/globals.css package.json pnpm-lock.yaml
@@ -213,7 +213,7 @@ git commit -m "feat: initialize shadcn/ui (no components) — cn(), theme vars, 
 - Consumes: `components.json` (Task 2).
 - Produces: `make ui-add c="<names>"` — the documented entry point referenced by the KB (Task 1), `CLAUDE.md` and `wiki/local/shadcn.md` (Task 4).
 
-- [ ] **Step 1: Add the target**
+- [x] **Step 1: Add the target**
 
 In `.PHONY` (line 4), append `ui-add`:
 
@@ -232,12 +232,12 @@ ui-add:
 
 (Recipe lines are TAB-indented.)
 
-- [ ] **Step 2: Verify the usage guard**
+- [x] **Step 2: Verify the usage guard**
 
 Run: `make ui-add`
 Expected: prints `usage: make ui-add c="button dialog"`, exits 1.
 
-- [ ] **Step 3: Smoke test, then revert (template ships zero components)**
+- [x] **Step 3: Smoke test, then revert (template ships zero components)**
 
 ```bash
 make ui-add c=button
@@ -250,7 +250,7 @@ git status -s   # must show only the Makefile change
 
 Expected: `OK`, then a clean tree except `Makefile`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add Makefile
@@ -271,7 +271,7 @@ git commit -m "feat: add ui-add make target for shadcn components"
 - Consumes: `make ui-add` (Task 3), KB wording (Task 1).
 - Produces: repo-local documentation; nothing downstream.
 
-- [ ] **Step 1: Update the CLAUDE.md repo map**
+- [x] **Step 1: Update the CLAUDE.md repo map**
 
 ```
 - `src/` — Next.js delivery layer (the server layer): app, actions, mappers, request context
@@ -283,7 +283,7 @@ git commit -m "feat: add ui-add make target for shadcn components"
 - `src/` — Next.js delivery layer (the server layer): app, actions, mappers, request context; classic UI = shadcn/ui in `src/components/ui/` (`make ui-add`), custom components alongside
 ```
 
-- [ ] **Step 2: Create `wiki/local/shadcn.md`**
+- [x] **Step 2: Create `wiki/local/shadcn.md`**
 
 ```markdown
 # shadcn/ui — classic UI components
@@ -310,7 +310,7 @@ Gotchas:
   `lucide-react`) — commit `package.json` + `pnpm-lock.yaml` with the component.
 ```
 
-- [ ] **Step 3: Register the note in `wiki/local/index.md`**
+- [x] **Step 3: Register the note in `wiki/local/index.md`**
 
 Replace `_None yet._` with:
 
@@ -318,7 +318,7 @@ Replace `_None yet._` with:
 - [shadcn/ui — classic UI components](shadcn.md)
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add CLAUDE.md wiki/local/shadcn.md wiki/local/index.md
@@ -338,12 +338,12 @@ git commit -m "docs: document shadcn/ui convention (CLAUDE.md + wiki/local)"
 - Consumes: the KB SHA pushed in Task 1.
 - Produces: `wiki/standard/ddd-in-typescript.md` containing the shadcn wording; `SOURCES.lock` pinned to the Task 1 SHA.
 
-- [ ] **Step 1: Run wiki-sync against the local clone**
+- [x] **Step 1: Run wiki-sync against the local clone**
 
 Run: `KB_PATH=$HOME/Documents/esensia_knowledge_base make wiki-sync`
 Expected: exits 0; `wiki/SOURCES.lock` `sha:` equals the Task 1 SHA, `synced_at: '2026-07-16'`.
 
-- [ ] **Step 2: Verify the mirrored content and check for drift**
+- [x] **Step 2: Verify the mirrored content and check for drift**
 
 ```bash
 grep -n "shadcn" wiki/standard/ddd-in-typescript.md
@@ -352,7 +352,7 @@ make wiki-check
 
 Expected: grep hits (stack table + UI paragraph); wiki-check exits 0. Note: the diff may also include the KB's `llm-wiki.md` change from `2e33764` — expected, commit it too.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add wiki/standard wiki/SOURCES.lock
@@ -370,17 +370,17 @@ git commit -m "docs: re-sync wiki/standard at KB shadcn adoption SHA"
 - Consumes: all previous tasks.
 - Produces: a green branch ready for PR/merge.
 
-- [ ] **Step 1: Run the full pipeline**
+- [x] **Step 1: Run the full pipeline**
 
 Run: `make ci`
 Expected: format-check, lint, test-unit, wiki-check all pass.
 
-- [ ] **Step 2: Confirm the template still ships zero shadcn components**
+- [x] **Step 2: Confirm the template still ships zero shadcn components**
 
 Run: `ls src/components/`
 Expected: only `button` (no `ui/` directory).
 
-- [ ] **Step 3: Mark plan checkboxes done and commit any plan-tracking update**
+- [x] **Step 3: Mark plan checkboxes done and commit any plan-tracking update**
 
 ```bash
 git add docs/superpowers/plans/2026-07-16-shadcn-ui-setup.md
