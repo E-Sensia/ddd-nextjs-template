@@ -1,3 +1,6 @@
+# Dependency build scripts are denied: the repo has never needed them
+# (prebuilt binaries ship as optional deps). If a dependency legitimately
+# requires its postinstall, flip it to true here.
 allowBuilds:
   protobufjs: false
   sharp: false

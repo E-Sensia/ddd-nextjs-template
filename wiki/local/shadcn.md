@@ -13,6 +13,8 @@ In this repo:
   to pull exactly what it needs.
 - `src/components/<name>/` — hand-written, domain-specific components
   (one folder per component with its test), e.g. `src/components/button/`.
+- `src/hooks/` — where component-bundled hooks land (`components.json`
+  declares the `@/hooks` alias); created on first use by `make ui-add`.
 
 Gotchas:
 
@@ -20,3 +22,6 @@ Gotchas:
   component with `make ui-add` overwrites the file.
 - `make ui-add` may add runtime deps (`@radix-ui/*`, `class-variance-authority`,
   `lucide-react`) — commit `package.json` + `pnpm-lock.yaml` with the component.
+- The shadcn theme is class-based (`.dark`): dark mode now requires a theme
+  provider (e.g. next-themes) to set that class — the OS
+  `prefers-color-scheme` preference no longer applies automatically.
