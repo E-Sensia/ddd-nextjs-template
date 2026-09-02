@@ -2,7 +2,7 @@ name: Build & deploy
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
     tags: ["scw-test-*", "scw-prod-*"]
 
 jobs:
@@ -33,7 +33,7 @@ jobs:
     secrets: inherit
 
   build-image-deploy-aws:
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    if: github.ref == 'refs/heads/main'
     name: Build image and deploy to AWS
     uses: ./.github/workflows/build-image-deploy-aws.yml
     needs: [vars, tests]
