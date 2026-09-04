@@ -1,8 +1,11 @@
 name: SonarQube
 
 on:
+  # develop no longer exists here (renamed to main), so this trigger never
+  # fired. Same one-line fix as PR #5, carried here so that whichever of the
+  # two lands second does not put `develop` back.
   push:
-    branches: [develop]
+    branches: [main]
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -16,26 +19,194 @@ jobs:
       # skip still concludes success, whereas a skipped job reports no conclusion
       # at all -- which blocks the PR forever wherever `sonarqube` is a required
       # check. Kept in that shape here too, so every repo in the org reads alike.
-      # See E-Sensia/github-pipelines README.
       #
-      # Dependabot PRs come back as up=false as well: they cannot read Actions
-      # secrets, so SONAR_TOKEN arrives empty and the scanner dies with a
-      # misleading HTTP 401.
+      # Every other repo in the org gets this from the shared composite actions
+      # in E-Sensia/github-pipelines. This one cannot: that repository is private
+      # and this one is public, and GitHub does not resolve an action from a
+      # private repository into a public repository's workflow at all -- no
+      # access setting changes that, and the run dies at "Set up job" with
+      # "Unable to resolve action". So the logic is vendored below instead. The
+      # probe library is a verbatim copy; keep it and the two steps around it in
+      # step with actions/sonarqube-{preflight,verdict} there, which is where the
+      # reasoning behind each branch is written down at length.
       - name: Check SonarQube availability
         id: sonar
-        uses: E-Sensia/github-pipelines/actions/sonarqube-preflight@main
-        with:
-          sonar-token: ${{ secrets.SONAR_TOKEN }}
-          sonar-host-url: ${{ vars.SONAR_HOST_URL }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+          # Keyed on the PR author, not github.actor, which a human "Re-run jobs"
+          # would flip to that human and re-enable a scan that cannot work. On
+          # `push` there is no pull_request payload, so this is '' and the guard
+          # correctly does not fire.
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          set -eu
+
+          # Dependabot PRs cannot read Actions secrets: GitHub resolves `secrets.*` for
+          # Dependabot-triggered events from the separate DEPENDABOT store, so
+          # SONAR_TOKEN arrives empty and the scanner dies with a misleading "HTTP 401
+          # Unauthorized". Skipping loses nothing -- a dependency bump touches lockfiles
+          # and manifests, which Sonar does not analyse as source.
+          if [ "${PR_AUTHOR}" = "dependabot[bot]" ]; then
+            echo "up=false" >> "$GITHUB_OUTPUT"
+            echo "Dependabot PR - skipping SonarQube analysis while keeping the check green."
+            exit 0
+          fi
+
+          if [ -z "${SONAR_HOST_URL}" ]; then
+            echo "::error title=SONAR_HOST_URL is not set::Repository variable SONAR_HOST_URL is empty. That is a configuration fault, not an outage, so this job fails rather than silently skipping the quality gate."
+            exit 1
+          fi
+
+          # Written to RUNNER_TEMP rather than the workspace, which the Checkout step
+          # below wipes -- the Verdict step at the end of this job sources it again to ask
+          # the identical question with the identical patience.
+          cat > "${RUNNER_TEMP}/sonar_probe.sh" <<'PROBE'
+          # shellcheck shell=bash
+          #
+          # SonarQube readiness probe -- a sourced library, not an executable.
+          #
+          # The SonarQube server runs on a spot instance, so it is not always up, and
+          # `sonarqube` is a required check on develop in every product repo. A reclaimed
+          # instance therefore does not degrade one service: it reds every open PR in the
+          # org until the instance comes back. This file is the single definition of the
+          # question "is SonarQube serving right now?", asked once by sonarqube-preflight
+          # before the scan and again by sonarqube-verdict after a failure.
+          #
+          # Sourced rather than run: the caller needs `code` and `status` for its own
+          # annotation, and a subshell could only hand back an exit status. The preflight
+          # copies it to ${RUNNER_TEMP} -- not the workspace, which the caller's Checkout
+          # step wipes between the two uses.
+          #
+          # Expects in the environment:
+          #   SONAR_TOKEN     -- may be empty; an empty token yields 401, which counts as
+          #                      "answering" and is deliberately not laundered into a skip
+          #   SONAR_HOST_URL  -- required, trailing slash tolerated
+          #
+          # Standard: Onboarding/Git/ProductRepoChecks.md 2.2.
+
+          # probe_sonar <attempts>
+          #
+          # Asks SonarQube whether it is SERVING, retrying while it is not. Sets
+          # `code` and `status` for the caller's message and returns:
+          #
+          #   0  serving      200 + status UP, or 401/403 -- it answered
+          #   1  not serving  no answer / 5xx / 404 / any status but UP
+          #   2  never resolved     unresolvable host or malformed URL
+          #
+          # Shared by the preflight and the verdict so the two ask the identical
+          # question with the identical patience. They have to: the verdict exists
+          # to decide whether a failure was the server's answer or its absence, and
+          # it can only tell those apart against the same definition of "serving"
+          # that let the job start. A single un-retried probe there would call one
+          # unlucky timeout an outage and skip a real quality-gate failure.
+          #
+          # Retried in an explicit loop rather than with curl --retry, whose
+          # interaction with --max-time differs across curl versions, and because
+          # STARTING is not an HTTP-level error at all -- curl sees 200 and stops.
+          probe_sonar() {
+            attempts=$1
+            resolved=0
+            code=000
+            status=""
+
+            for attempt in $(seq 1 "${attempts}"); do
+              rc=0
+              # No 2>/dev/null: -S's diagnostics ("Could not resolve host") are the
+              # only thing that distinguishes the failures below in the step log.
+              resp=$(curl -sS -w '\n%{http_code}' \
+                       --connect-timeout 10 --max-time 20 \
+                       -H "Authorization: Bearer ${SONAR_TOKEN}" \
+                       "${SONAR_HOST_URL%/}/api/system/status") || rc=$?
+
+              # 3 = malformed URL, 6 = host does not resolve. Neither is ever
+              # transient, so a run where every attempt ends this way is a
+              # configuration fault rather than the outage this all exists for.
+              if [ "${rc}" != "3" ] && [ "${rc}" != "6" ]; then
+                resolved=1
+              fi
+              if [ "${rc}" != "0" ]; then
+                resp=$'\n000'
+              fi
+
+              code=${resp##*$'\n'}
+              body=${resp%$'\n'*}
+              status=$(printf '%s' "${body}" | sed -n 's/.*"status"[[:space:]]*:[[:space:]]*"\([A-Z_]*\)".*/\1/p')
+
+              if [ "${code}" = "401" ] || [ "${code}" = "403" ]; then
+                return 0
+              fi
+              if [ "${code}" = "200" ] && [ "${status}" = "UP" ]; then
+                return 0
+              fi
+
+              detail="HTTP ${code}"
+              if [ -n "${status}" ]; then
+                detail="${detail}, status=${status}"
+              fi
+              if [ "${rc}" != "0" ]; then
+                detail="${detail}, curl exit ${rc}"
+              fi
+              echo "Attempt ${attempt}/${attempts}: not serving (${detail})."
+
+              if [ "${attempt}" -lt "${attempts}" ]; then
+                sleep 10
+              fi
+            done
+
+            if [ "${resolved}" = "0" ]; then
+              return 2
+            fi
+            return 1
+          }
+          PROBE
+
+          # shellcheck source=/dev/null
+          . "${RUNNER_TEMP}/sonar_probe.sh"
+
+          # Tolerate UNAVAILABILITY, never a VERDICT. Those must not collapse into one
+          # branch: a green check has to keep meaning "Sonar looked and approved".
+          #
+          #   no answer (000) / 5xx / 404 / status != UP  =>  NOT READY, retry then skip
+          #   200 + status UP                             =>  UP, run
+          #   401 / 403                                   =>  UP, run and fail loudly
+          #
+          # 12 attempts, 10s apart (~2 min of grace), sized for the worst case this
+          # exists for: a reclaimed spot instance has to be rescheduled AND boot, and
+          # SonarQube's own startup is the slow half.
+          rc=0
+          probe_sonar 12 || rc=$?
+
+          if [ "${rc}" = "0" ]; then
+            echo "up=true" >> "$GITHUB_OUTPUT"
+            if [ "${code}" = "401" ] || [ "${code}" = "403" ]; then
+              echo "::warning title=SonarQube rejected the token::/api/system/status returned HTTP ${code}. The server is answering, so this is a credential fault and not an outage - running the analysis so it reports that instead of masking it as a skip."
+            else
+              echo "SonarQube is UP; running analysis."
+            fi
+            exit 0
+          fi
+
+          # A *set but wrong* URL is a config fault wearing an outage's clothes, and this
+          # separates the two cases it can tell apart: a host that does not resolve
+          # (curl 6) or a malformed URL (curl 3) can never be transient. A wrong-but-live
+          # host still answers 404 and is indistinguishable from a booting server, so it
+          # skips -- the notice below says to check the variable when that repeats.
+          if [ "${rc}" = "2" ]; then
+            echo "::error title=SONAR_HOST_URL does not resolve::Every attempt failed before a connection was made (curl could not resolve the host, or the URL is malformed). That cannot be a spot reclaim, so it is a configuration fault and this job fails rather than skipping the quality gate. Check the SONAR_HOST_URL repository variable."
+            exit 1
+          fi
+
+          echo "up=false" >> "$GITHUB_OUTPUT"
+          echo "::notice title=SonarQube unavailable - analysis skipped::Never reached status UP within 12 attempts (last: HTTP ${code}${status:+, status=${status}}). Analysis is skipped and this check left non-blocking; it is NOT a statement that the code passed the quality gate - re-run once the instance is back for a real verdict. If this repeats on every run, check the SONAR_HOST_URL variable, because a wrong-but-live host also answers 404 here."
+
       - uses: actions/checkout@v4
         if: steps.sonar.outputs.up == 'true'
         with:
           fetch-depth: 0
 
-      # continue-on-error on the scan and the gate, so a server that disappears
-      # mid-scan reaches the verdict step below instead of ending the job. It
-      # stays here rather than inside the composite actions, where it is
-      # unreliable (actions/runner#2347).
+      # continue-on-error on both, so a server that disappears mid-scan reaches
+      # the Verdict step below instead of ending the job on the spot.
       - name: SonarQube Scan
         id: scan
         if: steps.sonar.outputs.up == 'true'
@@ -44,6 +215,7 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+
       - name: SonarQube Quality Gate check
         id: gate
         if: steps.scan.outcome == 'success'
@@ -55,16 +227,46 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
 
-      # Re-probes: the preflight only proved the server was there when the job
-      # started, and the gate polls for up to 600s. Still serving means the
-      # failure was a real result and this goes red; gone means there is no
-      # verdict to report and the check stays green.
+      # The check above only proved the server was there when the job started. A
+      # spot reclaim during the scan, or during the quality gate's polling window
+      # (up to 600s), still kills the run -- so the same question is asked again
+      # on the way out, this time about a failure that already happened. Still
+      # serving means the failure was the server's considered answer and this
+      # goes red; gone means the analysis never completed and there is no verdict
+      # to report either way.
       - name: Verdict
         if: >-
           steps.sonar.outputs.up == 'true' &&
           (steps.scan.outcome == 'failure' || steps.gate.outcome == 'failure')
-        uses: E-Sensia/github-pipelines/actions/sonarqube-verdict@main
-        with:
-          sonar-token: ${{ secrets.SONAR_TOKEN }}
-          sonar-host-url: ${{ vars.SONAR_HOST_URL }}
-          failed-step: ${{ steps.scan.outcome == 'failure' && 'scan' || 'quality gate' }}
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+          FAILED_STEP: ${{ steps.scan.outcome == 'failure' && 'scan' || 'quality gate' }}
+        run: |
+          set -eu
+
+          # Hard-fail rather than probe from scratch. The library is left in RUNNER_TEMP
+          # by the availability check above, so its absence means this step ran without
+          # one -- and a verdict with no preflight has no "the server was up when we
+          # started" premise to reason from. Silently probing anyway would let a job that
+          # never checked availability decide that a failure was an outage.
+          if [ ! -f "${RUNNER_TEMP}/sonar_probe.sh" ]; then
+            echo "::error title=Verdict ran without the availability check::${RUNNER_TEMP}/sonar_probe.sh is missing. It is written by the first step of this job, so this one must run after it. Failing rather than guessing at the verdict."
+            exit 1
+          fi
+
+          # shellcheck source=/dev/null
+          . "${RUNNER_TEMP}/sonar_probe.sh"
+
+          # 3 attempts, ~30s. Shorter than the twelve above on purpose: this is not
+          # waiting out a cold boot, only ruling out a single unlucky timeout against a
+          # server that was serving minutes ago.
+          rc=0
+          probe_sonar 3 || rc=$?
+
+          if [ "${rc}" != "1" ]; then
+            echo "::error title=SonarQube ${FAILED_STEP} failed::The server is serving normally (HTTP ${code}${status:+, status=${status}}), so this is a real result, not an outage. Open the step log above for the cause."
+            exit 1
+          fi
+
+          echo "::notice title=SonarQube went away mid-run - analysis incomplete::The ${FAILED_STEP} step failed and the server is no longer serving (last: HTTP ${code}${status:+, status=${status}}), so the failure is the outage rather than a quality-gate result. Left non-blocking; re-run for a real verdict."
