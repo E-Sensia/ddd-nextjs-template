@@ -11,19 +11,60 @@ jobs:
     if: github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     steps:
+      # The SonarQube server runs on a spot instance, so it is not always up.
+      # Availability gates the STEPS below, never the job: a job whose steps all
+      # skip still concludes success, whereas a skipped job reports no conclusion
+      # at all -- which blocks the PR forever wherever `sonarqube` is a required
+      # check. Kept in that shape here too, so every repo in the org reads alike.
+      # See E-Sensia/github-pipelines README.
+      #
+      # Dependabot PRs come back as up=false as well: they cannot read Actions
+      # secrets, so SONAR_TOKEN arrives empty and the scanner dies with a
+      # misleading HTTP 401.
+      - name: Check SonarQube availability
+        id: sonar
+        uses: E-Sensia/github-pipelines/actions/sonarqube-preflight@main
+        with:
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          sonar-host-url: ${{ vars.SONAR_HOST_URL }}
       - uses: actions/checkout@v4
+        if: steps.sonar.outputs.up == 'true'
         with:
           fetch-depth: 0
+
+      # continue-on-error on the scan and the gate, so a server that disappears
+      # mid-scan reaches the verdict step below instead of ending the job. It
+      # stays here rather than inside the composite actions, where it is
+      # unreliable (actions/runner#2347).
       - name: SonarQube Scan
+        id: scan
+        if: steps.sonar.outputs.up == 'true'
+        continue-on-error: true
         uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
       - name: SonarQube Quality Gate check
-        id: sonarqube-quality-gate-check
+        id: gate
+        if: steps.scan.outcome == 'success'
+        continue-on-error: true
         uses: sonarsource/sonarqube-quality-gate-action@master
         with:
           pollingTimeoutSec: 600
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+
+      # Re-probes: the preflight only proved the server was there when the job
+      # started, and the gate polls for up to 600s. Still serving means the
+      # failure was a real result and this goes red; gone means there is no
+      # verdict to report and the check stays green.
+      - name: Verdict
+        if: >-
+          steps.sonar.outputs.up == 'true' &&
+          (steps.scan.outcome == 'failure' || steps.gate.outcome == 'failure')
+        uses: E-Sensia/github-pipelines/actions/sonarqube-verdict@main
+        with:
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          sonar-host-url: ${{ vars.SONAR_HOST_URL }}
+          failed-step: ${{ steps.scan.outcome == 'failure' && 'scan' || 'quality gate' }}
